@@ -13,14 +13,36 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(express.static(__dirname)); // отдаёт index.html и другие файлы из этой же папки
+app.use(express.static(__dirname));
+
+// ---- ВРЕМЕННАЯ АВТОРИЗАЦИЯ (ДЛЯ ВХОДА) ----
+app.post('/login', (req, res) => {
+    const { login, password } = req.body;
+    console.log('Попытка входа:', login, password);
+
+    // ВРЕМЕННО: пропускаем любого пользователя
+    if (login && login.length > 0) {
+        return res.json({
+            success: true,
+            user: {
+                id: '1',
+                login: login,
+                name: 'Руководитель',
+                role: 'owner',
+                full_name: 'Руководитель'
+            }
+        });
+    }
+    res.status(401).json({
+        success: false,
+        error: 'Неверный логин или пароль'
+    });
+});
 
 // ---- Работа с токеном GigaChat (обновляется автоматически) ----
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-// GigaChat использует собственный сертификат безопасности (Минцифры).
-// Простой способ для старта - отключить строгую проверку сертификата.
 const insecureAgent = new https.Agent({ rejectUnauthorized: false });
 
 function getAccessToken() {
@@ -126,9 +148,9 @@ function askGigaChat(token, messages) {
     req.write(body);
     req.end();
   });
-}
+});
 
-// ---- Маршрут, который дёргает фронтенд (кнопка "Спросить ИИ-помощника") ----
+// ---- Маршрут для ИИ-помощника ----
 app.post('/api/ai-assistant', async (req, res) => {
   try {
     const { system, messages } = req.body;
@@ -155,7 +177,7 @@ app.post('/api/ai-assistant', async (req, res) => {
   }
 });
 
-// Все остальные запросы - отдаём главную страницу (одностраничное приложение)
+// ---- Все остальные запросы - отдаём главную страницу ----
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
