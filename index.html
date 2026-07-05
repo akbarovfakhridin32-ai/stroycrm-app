@@ -1,0 +1,3160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>СтройCRM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+  :root{
+    --bg:#0f1115;
+    --card:#171a21;
+    --card2:#1e222c;
+    --card3:#242938;
+    --border:#2a2f3a;
+    --text:#e8eaed;
+    --muted:#8b90a0;
+    --accent:#ff7a3d;
+    --accent2:#ffa26b;
+    --green:#3ddc84;
+    --yellow:#ffd166;
+    --red:#ff5c5c;
+    --blue:#5b9dff;
+  }
+  body.theme-light{
+    --bg:#f5f6f8;
+    --card:#ffffff;
+    --card2:#eef0f3;
+    --card3:#e4e7ec;
+    --border:#e0e2e7;
+    --text:#1a1d24;
+    --muted:#6b7280;
+    --accent:#ff7a3d;
+    --accent2:#ff9760;
+    --green:#1fa15e;
+    --yellow:#c98a06;
+    --red:#e0403f;
+    --blue:#3b7ded;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    background:var(--bg); color:var(--text);
+  }
+  #app{min-height:100vh; padding-bottom:76px;}
+
+  /* ============ LOGIN ============ */
+  #loginScreen{
+    min-height:100vh; display:flex; flex-direction:column; justify-content:center;
+    padding:28px 24px; background:radial-gradient(circle at 30% 20%, #201a14 0%, #0f1115 55%);
+  }
+  .login-logo{
+    width:64px; height:64px; border-radius:20px; background:linear-gradient(135deg,var(--accent),#c94f1a);
+    display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:800; color:#1a1200;
+    margin-bottom:18px; box-shadow:0 10px 30px rgba(255,122,61,.25);
+  }
+  .login-title{font-size:26px; font-weight:800; margin:0 0 6px;}
+  .login-sub{font-size:14px; color:var(--muted); margin:0 0 32px;}
+  .login-field{margin-bottom:14px;}
+  .login-field label{display:block; font-size:12.5px; color:var(--muted); margin-bottom:6px; font-weight:600; letter-spacing:.2px;}
+  .login-field input{
+    width:100%; background:var(--card); border:1.5px solid var(--border); border-radius:13px;
+    padding:15px 16px; color:var(--text); font-size:16px; outline:none;
+  }
+  .login-field input:focus{border-color:var(--accent);}
+  .login-error{
+    background:rgba(255,92,92,.12); border:1px solid rgba(255,92,92,.3); color:var(--red);
+    padding:11px 14px; border-radius:11px; font-size:13.5px; margin-bottom:14px; display:none;
+  }
+  .login-btn{
+    width:100%; background:var(--accent); color:#1a1200; border:none; border-radius:13px;
+    padding:16px; font-size:15.5px; font-weight:700; cursor:pointer; margin-top:8px;
+  }
+  .login-btn:disabled{opacity:.6;}
+  .login-hint{text-align:center; font-size:12px; color:var(--muted); margin-top:22px; line-height:1.6;}
+
+  /* ============ REGULATION ============ */
+  #regulationScreen{
+    min-height:100vh; display:flex; flex-direction:column;
+    background:radial-gradient(circle at 30% 20%, #201a14 0%, #0f1115 55%);
+  }
+  .reg-scroll{flex:1; overflow-y:auto; padding:28px 24px 10px; -webkit-overflow-scrolling:touch;}
+  .reg-header{text-align:left;}
+  .reg-point{display:flex; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .reg-ic{font-size:24px; flex:none; width:36px; text-align:center;}
+  .reg-title{font-size:14.5px; font-weight:700; margin-bottom:4px;}
+  .reg-text{font-size:13px; color:var(--muted); line-height:1.5;}
+  .reg-footer{
+    padding:16px 24px calc(16px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--border); background:var(--bg);
+  }
+  .reg-agree{display:flex; align-items:flex-start; gap:10px; font-size:13px; color:var(--text); margin-bottom:14px; cursor:pointer; line-height:1.4;}
+  .reg-agree input[type=checkbox]{width:20px; height:20px; flex:none; margin-top:1px; accent-color:var(--accent);}
+
+  /* ============ HEADER ============ */
+  header{
+    position:sticky; top:0; z-index:20;
+    background:linear-gradient(135deg,#1b1e26,#141620);
+    padding:16px 16px 14px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  header .htitle h1{margin:0; font-size:19px; display:flex; align-items:center; gap:8px;}
+  header .htitle h1 span.logo{
+    background:var(--accent); color:#1a1200; width:28px; height:28px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; font-weight:800; font-size:14px;
+  }
+  header .htitle p{margin:4px 0 0; font-size:12px; color:var(--muted);}
+  .user-chip{
+    display:flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border);
+    padding:7px 12px 7px 7px; border-radius:20px; cursor:pointer;
+  }
+  .user-avatar{
+    width:26px; height:26px; border-radius:50%; background:var(--card3); color:var(--accent2);
+    display:flex; align-items:center; justify-content:center; font-size:11.5px; font-weight:700;
+  }
+  .user-chip .uname{font-size:12px; font-weight:600; max-width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+
+  .bell-btn{
+    position:relative; width:38px; height:38px; border-radius:50%; background:var(--card);
+    border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+    font-size:16px; cursor:pointer; flex:none;
+  }
+  .bell-badge{
+    position:absolute; top:-3px; right:-3px; background:var(--red); color:#fff; font-size:10px; font-weight:700;
+    min-width:17px; height:17px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    padding:0 4px; border:2px solid var(--bg);
+  }
+  .notif-item{display:flex; gap:10px; padding:12px 0; border-bottom:1px solid var(--border); cursor:pointer;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item.unread{background:rgba(255,122,61,.05); margin:0 -16px; padding:12px 16px;}
+  .notif-ic{font-size:18px; flex:none; width:28px; text-align:center;}
+  .notif-body{flex:1;}
+  .notif-text{font-size:13.5px; line-height:1.4;}
+  .notif-time{font-size:11px; color:var(--muted); margin-top:3px;}
+
+  main{padding:14px;}
+  .screen{display:none;}
+  .screen.active{display:block; animation:fadeIn .18s ease;}
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+
+  .topbar{display:flex; gap:8px; align-items:center; margin-bottom:14px;}
+  .search{
+    flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:11px 14px; color:var(--text); font-size:14px; outline:none;
+  }
+  .search::placeholder{color:var(--muted);}
+
+  .btn{
+    border:none; border-radius:12px; padding:11px 16px; font-size:14px; font-weight:600;
+    cursor:pointer; display:inline-flex; align-items:center; gap:6px; justify-content:center;
+  }
+  .btn-accent{background:var(--accent); color:#1a1200;}
+  .btn-ghost{background:var(--card); color:var(--text); border:1px solid var(--border);}
+  .btn-block{width:100%;}
+  .btn-sm{padding:7px 12px; font-size:12.5px; border-radius:9px;}
+  .btn:disabled{opacity:.55;}
+
+  .fab{
+    position:fixed; right:16px; bottom:88px; z-index:30;
+    width:56px; height:56px; border-radius:50%;
+    background:var(--accent); color:#1a1200; border:none;
+    font-size:28px; box-shadow:0 6px 18px rgba(255,122,61,.35);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+
+  .card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:10px;}
+  .proj-head{display:flex; justify-content:space-between; align-items:flex-start; gap:8px;}
+  .proj-title{font-size:15.5px; font-weight:700; margin:0 0 3px;}
+  .proj-sub{font-size:12.5px; color:var(--muted); margin:0;}
+  .badge{font-size:11px; font-weight:700; padding:4px 9px; border-radius:20px; white-space:nowrap;}
+  .badge-active{background:rgba(61,220,132,.15); color:var(--green);}
+  .badge-paused{background:rgba(255,209,102,.15); color:var(--yellow);}
+  .badge-done{background:rgba(91,157,255,.15); color:var(--blue);}
+  .badge-problem{background:rgba(255,92,92,.15); color:var(--red);}
+  .role-badge{font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; background:var(--card3); color:var(--accent2); text-transform:uppercase; letter-spacing:.3px;}
+
+  .progress-wrap{margin-top:10px;}
+  .progress-bar{height:7px; background:var(--card2); border-radius:6px; overflow:hidden;}
+  .progress-fill{height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:6px;}
+  .progress-label{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); margin-top:5px;}
+
+  .stat-row{display:flex; gap:8px; margin-bottom:14px;}
+  .stat{flex:1; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 10px; text-align:center;}
+  .stat .num{font-size:19px; font-weight:800;}
+  .stat .lbl{font-size:10.5px; color:var(--muted); margin-top:2px;}
+
+  .tabs{display:flex; gap:6px; margin-bottom:14px; overflow-x:auto; padding-bottom:2px;}
+  .tab{
+    flex:none; padding:8px 14px; border-radius:20px; font-size:13px; font-weight:600;
+    background:var(--card); border:1px solid var(--border); color:var(--muted); cursor:pointer;
+    transition:background .22s ease, color .22s ease, border-color .22s ease, transform .12s ease;
+  }
+  .tab:active{transform:scale(.94);}
+  .tab.active{background:var(--accent) !important; color:#1a1200 !important; border-color:var(--accent) !important; font-weight:700;}
+
+  .empty{text-align:center; padding:50px 20px; color:var(--muted);}
+  .empty .ic{font-size:40px; margin-bottom:10px;}
+
+  nav.bottom{
+    position:fixed; bottom:0; left:0; right:0; z-index:20;
+    background:#141620; border-top:1px solid var(--border);
+    display:flex; padding:6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  nav.bottom button{flex:1; background:none; border:none; color:var(--muted); font-size:10.5px; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; cursor:pointer;}
+  nav.bottom button .ic{font-size:20px;}
+  nav.bottom button.active{color:var(--accent);}
+
+  .overlay{position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:50; display:none; align-items:flex-end; justify-content:center;}
+  .overlay.active{display:flex;}
+  .modal{
+    background:var(--bg); width:100%; max-width:560px; border-radius:20px 20px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom)); max-height:88vh; overflow-y:auto;
+    border-top:1px solid var(--border); animation:slideUp .2s ease;
+  }
+  @keyframes slideUp{from{transform:translateY(30px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .modal-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;}
+  .modal-head h2{margin:0; font-size:17px;}
+  .modal-close{background:var(--card); border:none; color:var(--text); width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer;}
+
+  label{display:block; font-size:12.5px; color:var(--muted); margin:12px 0 6px;}
+  label:first-of-type{margin-top:0;}
+  input[type=text], input[type=number], input[type=date], input[type=tel], input[type=password], textarea, select{
+    width:100%; background:var(--card); border:1px solid var(--border); border-radius:11px;
+    padding:11px 13px; color:var(--text); font-size:14.5px; outline:none; font-family:inherit;
+  }
+  textarea{resize:vertical; min-height:60px;}
+  select{appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath fill='%238b90a0' d='M0 0l6 8 6-8z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center;}
+  .row2{display:flex; gap:10px;}
+  .row2 > div{flex:1;}
+
+  .stage-item{background:var(--card); border:1px solid var(--border); border-radius:13px; padding:11px 13px; display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .stage-check{width:24px; height:24px; border-radius:50%; border:2px solid var(--border); flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer;}
+  .stage-check.done{background:var(--green); border-color:var(--green); color:#062012;}
+  .stage-name{flex:1; font-size:14px;}
+  .stage-name.done{text-decoration:line-through; color:var(--muted);}
+  .stage-del{background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:4px;}
+
+  .detail-section{margin-bottom:18px;}
+  .detail-section h3{font-size:13.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin:0 0 10px; display:flex; justify-content:space-between; align-items:center;}
+  .info-line{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:14px; gap:10px;}
+  .info-line:last-child{border-bottom:none;}
+  .info-line .k{color:var(--muted); flex:none;}
+  .info-line .v{text-align:right;}
+
+  .member-row{display:flex; align-items:center; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:13px; padding:11px 13px; margin-bottom:8px;}
+  .member-row .m-ava{width:34px; height:34px; border-radius:50%; background:var(--card3); color:var(--accent2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; flex:none;}
+  .member-row .m-info{flex:1; min-width:0;}
+  .member-row .m-name{font-size:14px; font-weight:600;}
+  .member-row .m-role{font-size:11.5px; color:var(--muted);}
+  .member-del{background:none; border:none; color:var(--red); font-size:13px; cursor:pointer; padding:5px 8px;}
+
+  .client-row{display:flex; justify-content:space-between; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:13px 14px; margin-bottom:9px;}
+  .client-name{font-weight:700; font-size:14.5px;}
+  .client-phone{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .call-btn{background:var(--card2); border:1px solid var(--border); color:var(--green); border-radius:10px; padding:9px 12px; font-size:13px; text-decoration:none;}
+
+  .danger-link{color:var(--red); font-size:13px; text-align:center; margin-top:16px; cursor:pointer;}
+  .backlink{color:var(--muted); font-size:13px; margin-bottom:12px; display:inline-block; cursor:pointer;}
+
+  /* ============ CHAT ============ */
+  .chat-wrap{display:flex; flex-direction:column; height:calc(100vh - 260px); min-height:300px; position:relative;}
+  .chat-pinned{
+    background:var(--card3); border:1px solid var(--border); border-radius:12px; padding:9px 12px;
+    display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:12.5px;
+  }
+  .chat-pinned .pin-ic{color:var(--accent2); flex:none;}
+  .chat-pinned .pin-text{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text);}
+  .chat-pinned .pin-close{background:none; border:none; color:var(--muted); font-size:14px; flex:none;}
+  .chat-messages{flex:1; overflow-y:auto; padding:6px 2px; display:flex; flex-direction:column; gap:10px; -webkit-overflow-scrolling:touch;}
+  .msg{max-width:80%; padding:9px 12px; border-radius:15px; font-size:14px; line-height:1.4; position:relative;}
+  .msg.mine{align-self:flex-end; background:var(--accent); color:#1a1200; border-bottom-right-radius:4px;}
+  .msg.theirs{align-self:flex-start; background:var(--card); border:1px solid var(--border); border-bottom-left-radius:4px;}
+  .msg .m-author{font-size:11px; font-weight:700; margin-bottom:3px; opacity:.75;}
+  .msg .m-reply-quote{
+    background:rgba(0,0,0,.15); border-left:3px solid rgba(0,0,0,.3); border-radius:6px; padding:5px 8px;
+    font-size:12px; margin-bottom:6px; opacity:.85;
+  }
+  .msg.theirs .m-reply-quote{background:var(--card2); border-left-color:var(--accent);}
+  .msg-photos-grid{display:grid; gap:4px; margin-top:6px;}
+  .msg-photos-grid.n1{grid-template-columns:1fr;}
+  .msg-photos-grid.n2{grid-template-columns:1fr 1fr;}
+  .msg-photos-grid.n3plus{grid-template-columns:1fr 1fr;}
+  .msg-photos-grid img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:10px; cursor:pointer; display:block;}
+  .msg .m-voice{display:flex; align-items:center; gap:8px; padding:4px 0;}
+  .msg .m-voice button{width:32px; height:32px; border-radius:50%; border:none; background:rgba(0,0,0,.2); color:inherit; font-size:13px; flex:none;}
+  .msg.theirs .m-voice button{background:var(--card2);}
+  .msg .m-voice .wave{flex:1; height:3px; background:currentColor; opacity:.3; border-radius:2px;}
+  .msg .m-time{font-size:10px; opacity:.6; margin-top:4px; text-align:right; display:flex; align-items:center; justify-content:flex-end; gap:4px;}
+  .msg-actions{display:flex; gap:10px; margin-top:3px; padding:0 4px;}
+  .msg-actions span{font-size:11px; color:var(--muted); cursor:pointer;}
+
+  .reply-preview{
+    background:var(--card2); border-left:3px solid var(--accent); border-radius:10px 10px 0 0;
+    padding:8px 12px; display:none; align-items:center; gap:8px; font-size:12.5px;
+  }
+  .reply-preview.active{display:flex;}
+  .reply-preview .rp-text{flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted);}
+  .reply-preview .rp-close{background:none; border:none; color:var(--muted); font-size:16px;}
+
+  .chat-input-fixed{
+    position:sticky; bottom:0; background:var(--bg); padding-top:8px;
+    border-top:1px solid var(--border); margin-top:8px; transition:transform .1s ease;
+  }
+  .photo-stage-preview{display:flex; gap:6px; overflow-x:auto; padding:8px 0 0;}
+  .photo-stage-preview .psp{position:relative; width:56px; height:56px; border-radius:10px; overflow:hidden; flex:none;}
+  .photo-stage-preview .psp img{width:100%; height:100%; object-fit:cover;}
+  .photo-stage-preview .psp .rm{position:absolute; top:2px; right:2px; width:16px; height:16px; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; border:none; font-size:10px;}
+  .chat-input-row{display:flex; gap:8px; align-items:center; padding:8px 0;}
+  .chat-input-row input[type=text]{flex:1;}
+  .chat-icon-btn{
+    width:42px; height:42px; border-radius:50%; background:var(--card); border:1px solid var(--border);
+    color:var(--text); font-size:17px; flex:none; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .chat-icon-btn.recording{background:var(--red); color:#fff; border-color:var(--red);}
+  .chat-send{width:42px; height:42px; border-radius:50%; background:var(--accent); border:none; color:#1a1200; font-size:17px; flex:none; cursor:pointer;}
+  .chat-uploading{font-size:12px; color:var(--muted); padding:4px 0; display:flex; align-items:center; gap:6px;}
+
+  .tabbar-inner{display:flex; gap:6px; margin-bottom:14px;}
+  .tabbar-inner .tab{flex:1; text-align:center; white-space:nowrap;}
+  .tabbar-scroll{overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; scrollbar-width:none;}
+  .tabbar-scroll::-webkit-scrollbar{display:none;}
+  .tabbar-scroll .tab{flex:none; padding:8px 16px;}
+
+  /* ============ REPORTS ============ */
+  .report-card{background:var(--card); border:1px solid var(--border); border-radius:16px; padding:14px; margin-bottom:12px;}
+  .report-head{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .report-ava{width:32px; height:32px; border-radius:50%; background:var(--card3); color:var(--accent2); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12.5px; flex:none;}
+  .report-author{font-size:13.5px; font-weight:700;}
+  .report-time{font-size:11.5px; color:var(--muted);}
+  .report-comment{font-size:14px; line-height:1.5; margin-bottom:10px;}
+  .report-stage-tag{display:inline-flex; align-items:center; gap:5px; background:rgba(61,220,132,.12); color:var(--green); font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:20px; margin-bottom:10px;}
+  .report-photos{display:grid; grid-template-columns:repeat(3,1fr); gap:6px;}
+  .report-photos img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:9px; cursor:pointer;}
+  .report-photos img.more{opacity:.5;}
+
+  .photo-picker-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px;}
+  .photo-picker-grid .ph{position:relative; aspect-ratio:1; border-radius:10px; overflow:hidden; background:var(--card2);}
+  .photo-picker-grid .ph img{width:100%; height:100%; object-fit:cover;}
+  .photo-picker-grid .ph .rm{position:absolute; top:3px; right:3px; width:20px; height:20px; border-radius:50%; background:rgba(0,0,0,.6); color:#fff; border:none; font-size:12px; display:flex; align-items:center; justify-content:center;}
+  .photo-add-btn{aspect-ratio:1; border-radius:10px; border:1.5px dashed var(--border); background:var(--card); color:var(--muted); display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer;}
+
+  /* ============ DOCUMENTS ============ */
+  .doc-row{display:flex; align-items:center; gap:12px; background:var(--card); border:1px solid var(--border); border-radius:14px; padding:13px 14px; margin-bottom:9px;}
+  .doc-icon{width:42px; height:42px; border-radius:11px; background:var(--card3); display:flex; align-items:center; justify-content:center; font-size:19px; flex:none;}
+  .doc-info{flex:1; min-width:0;}
+  .doc-name{font-size:14px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .doc-meta{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .doc-dl{width:38px; height:38px; border-radius:10px; background:var(--card2); border:1px solid var(--border); color:var(--accent2); display:flex; align-items:center; justify-content:center; text-decoration:none; flex:none; font-size:16px;}
+
+  /* ============ FINANCE ============ */
+  .fin-big{text-align:center; padding:20px 10px;}
+  .fin-big .amount{font-size:32px; font-weight:800;}
+  .fin-big .label{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  .fin-ring-wrap{display:flex; justify-content:center; margin:10px 0 18px;}
+  .fin-grid{display:flex; gap:8px;}
+  .fin-grid .fin-stat{flex:1; text-align:center; background:var(--card2); border-radius:12px; padding:12px 8px;}
+  .fin-grid .fin-stat .v{font-size:16px; font-weight:800;}
+  .fin-grid .fin-stat .l{font-size:10.5px; color:var(--muted); margin-top:3px;}
+
+  /* ============ AI ASSISTANT ============ */
+  .ai-fab-btn{
+    display:flex; align-items:center; gap:8px; background:linear-gradient(135deg,#6d5bff,#9b6bff);
+    color:#fff; border:none; border-radius:14px; padding:13px 16px; font-size:14px; font-weight:700;
+    cursor:pointer; width:100%; margin-top:10px; box-shadow:0 6px 16px rgba(109,91,255,.28);
+  }
+  .ai-fab-btn:active{transform:scale(.98);}
+  .ai-modal .modal{display:flex; flex-direction:column; max-height:88vh;}
+  .ai-chat-body{flex:1; overflow-y:auto; padding:4px 2px; -webkit-overflow-scrolling:touch;}
+  .ai-msg{max-width:88%; padding:11px 14px; border-radius:16px; margin-bottom:10px; font-size:13.5px; line-height:1.5; white-space:pre-wrap;}
+  .ai-msg.user{background:var(--accent); color:#1a1200; margin-left:auto; border-bottom-right-radius:5px;}
+  .ai-msg.bot{background:var(--card2); color:var(--text); margin-right:auto; border-bottom-left-radius:5px;}
+  .ai-msg.bot::before{content:'🤖 '; opacity:.7;}
+  .ai-suggest-row{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;}
+  .ai-suggest-chip{font-size:12px; padding:7px 12px; border-radius:20px; background:var(--card2); border:1px solid var(--border); color:var(--text); cursor:pointer;}
+  .ai-suggest-chip:active{background:var(--card3);}
+  .ai-input-row{display:flex; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border);}
+  .ai-input-row input{flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:11px 14px; color:var(--text); font-size:14px; outline:none;}
+  .ai-input-row input:focus{border-color:#9b6bff;}
+  .ai-send-btn{background:linear-gradient(135deg,#6d5bff,#9b6bff); color:#fff; border:none; border-radius:12px; width:44px; flex:none; font-size:17px; cursor:pointer;}
+  .ai-typing{display:flex; gap:4px; padding:12px 14px;}
+  .ai-typing span{width:6px; height:6px; border-radius:50%; background:var(--muted); animation:aiTyping 1.2s infinite ease-in-out;}
+  .ai-typing span:nth-child(2){animation-delay:.15s;} .ai-typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes aiTyping{0%,60%,100%{opacity:.3; transform:translateY(0);} 30%{opacity:1; transform:translateY(-3px);}}
+
+  /* ============ CALENDAR ============ */
+  .cal-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .cal-header h2{margin:0; font-size:18px; font-weight:700; text-transform:capitalize;}
+  .cal-nav-btn{width:38px; height:38px; border-radius:50%; background:var(--card); border:1px solid var(--border); color:var(--text); font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer;}
+  .cal-weekdays{display:grid; grid-template-columns:repeat(7,1fr); gap:4px; margin-bottom:6px;}
+  .cal-weekdays div{text-align:center; font-size:11px; color:var(--muted); font-weight:600; padding:4px 0;}
+  .cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:4px;}
+  .cal-day{
+    aspect-ratio:1; border-radius:11px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:13.5px; font-weight:600; cursor:pointer; position:relative; background:var(--card); border:1px solid var(--border);
+    color:var(--text); transition:background .15s ease, transform .1s ease;
+  }
+  .cal-day:active{transform:scale(.92);}
+  .cal-day.empty{background:none; border:none; cursor:default;}
+  .cal-day.today{border-color:var(--accent2); border-width:1.5px;}
+  .cal-day.working{background:rgba(61,220,132,.16); border-color:rgba(61,220,132,.4); color:var(--green);}
+  .cal-day.off{background:var(--card2); color:var(--muted);}
+  .cal-day .dot{width:5px; height:5px; border-radius:50%; background:var(--green); margin-top:2px;}
+  .cal-legend{display:flex; gap:14px; margin-top:14px; flex-wrap:wrap;}
+  .cal-legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);}
+  .cal-legend-dot{width:12px; height:12px; border-radius:4px;}
+
+  .cal-team-row{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px;}
+  .cal-team-name{font-size:13.5px; font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:8px;}
+  .cal-team-strip{display:grid; grid-template-columns:repeat(7,1fr); gap:3px;}
+  .cal-team-strip .cts{aspect-ratio:1; border-radius:6px; background:var(--card2);}
+  .cal-team-strip .cts.working{background:var(--green);}
+  .cal-team-strip .cts.today-mark{outline:1.5px solid var(--accent2);}
+
+  /* ============ LIGHTBOX ============ */
+  .lightbox{position:fixed; inset:0; background:rgba(0,0,0,.92); z-index:100; display:none; align-items:center; justify-content:center; flex-direction:column;}
+  .lightbox.active{display:flex;}
+  .lightbox img{max-width:94vw; max-height:80vh; object-fit:contain; border-radius:8px;}
+  .lightbox-close{position:absolute; top:20px; right:20px; width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,.12); border:none; color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center;}
+  .lightbox-nav{position:absolute; top:50%; transform:translateY(-50%); width:44px; height:44px; border-radius:50%; background:rgba(255,255,255,.12); border:none; color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center;}
+  .lightbox-prev{left:12px;} .lightbox-next{right:12px;}
+  .lightbox-counter{position:absolute; bottom:24px; left:0; right:0; text-align:center; color:rgba(255,255,255,.7); font-size:13px;}
+
+  .spinner{display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,.3); border-top-color:#1a1200; border-radius:50%; animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .chip-select{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{padding:8px 13px; border-radius:20px; font-size:13px; border:1px solid var(--border); background:var(--card); color:var(--muted); cursor:pointer;}
+  .chip.sel{background:var(--accent); border-color:var(--accent); color:#1a1200; font-weight:600;}
+
+  /* ============ ESTIMATE (СМЕТЫ) ============ */
+  .est-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .est-table th{text-align:left; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; padding:6px 6px; border-bottom:1px solid var(--border);}
+  .est-table td{padding:9px 6px; border-bottom:1px solid var(--border); vertical-align:middle;}
+  .est-table tr:last-child td{border-bottom:none;}
+  .est-row-name{font-weight:600; font-size:13.5px;}
+  .est-row-sub{font-size:11px; color:var(--muted); margin-top:2px;}
+  .est-num{text-align:right; white-space:nowrap;}
+  .est-del{background:none; border:none; color:var(--red); font-size:15px; cursor:pointer; padding:4px;}
+  .est-total-card{background:linear-gradient(135deg,var(--accent),#c94f1a); border-radius:16px; padding:16px; margin-bottom:14px; color:#1a1200;}
+  .est-total-card .lbl{font-size:12px; opacity:.85; font-weight:600;}
+  .est-total-card .val{font-size:26px; font-weight:800; margin-top:2px;}
+  .tpl-row{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:1px solid var(--border); border-radius:13px; padding:12px 14px; margin-bottom:8px; cursor:pointer;}
+  .tpl-row:active{transform:scale(.98);}
+  .tpl-name{font-weight:600; font-size:14px;}
+  .tpl-meta{font-size:11.5px; color:var(--muted); margin-top:2px;}
+
+  /* ============ HISTORY (ИСТОРИЯ) ============ */
+  .hist-item{display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
+  .hist-item:last-child{border-bottom:none;}
+  .hist-dot{width:8px; height:8px; border-radius:50%; background:var(--accent); margin-top:6px; flex:none;}
+  .hist-text{font-size:13.5px; flex:1;}
+  .hist-text b{font-weight:700;}
+  .hist-time{font-size:11px; color:var(--muted); margin-top:2px;}
+
+  /* ============ ACTIVE STATE ANIMATION ============ */
+  .search:focus{border-color:var(--accent); transition:border-color .18s ease;}
+  .tab, .chip{transition:background .18s ease, color .18s ease, border-color .18s ease, transform .1s ease;}
+  .tab:active, .chip:active{transform:scale(.94);}
+
+  /* ============ QUICK ACTIONS (главный экран) ============ */
+  .quick-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;}
+  .quick-tile{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:12px 6px; text-align:center; cursor:pointer; transition:transform .12s ease, border-color .15s ease;}
+  .quick-tile:active{transform:scale(.93); border-color:var(--accent);}
+  .quick-tile .qt-ic{font-size:20px; margin-bottom:4px;}
+  .quick-tile .qt-lbl{font-size:10px; color:var(--muted); font-weight:600; line-height:1.2;}
+
+  /* ============ TASKS (ЗАДАЧИ) ============ */
+  .task-card{background:var(--card); border:1px solid var(--border); border-left:3px solid var(--border); border-radius:14px; padding:13px 14px; margin-bottom:9px;}
+  .task-card.prio-high{border-left-color:var(--red);}
+  .task-card.prio-med{border-left-color:var(--yellow);}
+  .task-card.prio-low{border-left-color:var(--blue);}
+  .task-card.overdue{background:rgba(255,92,92,.06);}
+  .task-top{display:flex; align-items:flex-start; gap:10px;}
+  .task-check{width:24px; height:24px; border-radius:8px; border:2px solid var(--border); flex:none; display:flex; align-items:center; justify-content:center; font-size:13px; cursor:pointer; margin-top:1px;}
+  .task-check.done{background:var(--green); border-color:var(--green); color:#062012;}
+  .task-name{font-size:14.5px; font-weight:600; flex:1;}
+  .task-name.done{text-decoration:line-through; color:var(--muted);}
+  .task-meta-row{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; padding-left:34px;}
+  .task-chip{font-size:11px; padding:3px 9px; border-radius:20px; background:var(--card2); color:var(--muted); display:flex; align-items:center; gap:4px;}
+  .task-chip.due-soon{background:rgba(255,209,102,.15); color:var(--yellow);}
+  .task-chip.due-over{background:rgba(255,92,92,.15); color:var(--red);}
+  .task-filter-row{display:flex; gap:6px; margin-bottom:12px; overflow-x:auto;}
+</style>
+<style>
+  /* ============ DASHBOARD (РУКОВОДИТЕЛЬ) ============ */
+  .dash-wrap{margin-bottom:16px;}
+  .dash-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .dash-head h2{font-size:15px; margin:0; display:flex; align-items:center; gap:6px;}
+  .dash-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .dash-card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:13px 14px;}
+  .dash-card .dc-num{font-size:22px; font-weight:800;}
+  .dash-card .dc-lbl{font-size:11px; color:var(--muted); margin-top:2px;}
+  .dash-card.alert{border-color:rgba(255,92,92,.4); background:rgba(255,92,92,.06);}
+  .dash-card.alert .dc-num{color:var(--red);}
+  .dash-feed{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:4px 14px; margin-top:10px;}
+  .dash-feed-item{display:flex; gap:10px; padding:11px 0; border-bottom:1px solid var(--border); font-size:13px;}
+  .dash-feed-item:last-child{border-bottom:none;}
+  .dash-feed-ic{font-size:16px; flex:none;}
+  .dash-feed-text{flex:1;}
+  .dash-feed-text b{font-weight:700;}
+  .dash-feed-proj{color:var(--accent2); cursor:pointer;}
+  .dash-feed-time{font-size:11px; color:var(--muted); margin-top:2px;}
+  .dash-toggle{font-size:12px; color:var(--muted); cursor:pointer; padding:4px 8px;}
+
+  /* ============ REPORT STATUS ============ */
+  .report-status-tag{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:4px 10px; border-radius:20px; margin-bottom:10px; margin-left:6px;}
+  .report-status-tag.accepted{background:rgba(61,220,132,.15); color:var(--green);}
+  .report-status-tag.rework{background:rgba(255,92,92,.15); color:var(--red);}
+  .report-actions-row{display:flex; gap:8px; margin-top:10px;}
+  .report-actions-row button{flex:1;}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN SCREEN ============ -->
+<div id="loginScreen">
+  <div class="login-logo">С</div>
+  <h1 class="login-title">СтройCRM</h1>
+  <p class="login-sub">Войдите по коду сотрудника</p>
+
+  <div class="login-error" id="loginError"></div>
+
+  <div class="login-field">
+    <label>Код сотрудника</label>
+    <input type="text" id="loginCode" placeholder="напр. RUK-0001" autocapitalize="characters">
+  </div>
+  <div class="login-field">
+    <label>Пароль</label>
+    <input type="password" id="loginPass" placeholder="Пароль">
+  </div>
+
+  <button class="login-btn" id="loginBtn" onclick="doLogin()">Войти</button>
+
+  <p class="login-hint">Код сотрудника и пароль выдаёт руководитель компании.<br>Первый вход руководителя: RUK-0001</p>
+</div>
+
+<!-- ============ REGULATION SCREEN ============ -->
+<div id="regulationScreen" style="display:none;">
+  <div class="reg-scroll">
+    <div class="reg-header">
+      <div class="login-logo">📜</div>
+      <h1 class="login-title" style="font-size:22px;">Регламент работы</h1>
+      <p class="login-sub" style="margin-bottom:20px;">Пожалуйста, ознакомьтесь перед началом работы</p>
+    </div>
+    <div id="regulationList"></div>
+  </div>
+  <div class="reg-footer">
+    <label class="reg-agree">
+      <input type="checkbox" id="regAgreeCheckbox">
+      <span>Я ознакомлен(а) с регламентом и согласен(на) его соблюдать</span>
+    </label>
+    <button class="login-btn" id="regAcceptBtn" onclick="acceptRegulation()">Подтвердить и продолжить</button>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" style="display:none;">
+
+  <header>
+    <div class="htitle">
+      <h1><span class="logo">С</span> СтройCRM</h1>
+      <p id="headerSub">Объекты и этапы работ</p>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div class="bell-btn" onclick="openNotifications()">
+        🔔
+        <span class="bell-badge" id="bellBadge" style="display:none;">0</span>
+      </div>
+      <div class="user-chip" onclick="goTo('profile')">
+        <div class="user-avatar" id="userAvatarChip">?</div>
+        <div class="uname" id="userNameChip">...</div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ===== ОБЪЕКТЫ ===== -->
+    <section class="screen active" id="screen-projects">
+      <div id="dashWrap"></div>
+      <div class="stat-row" id="statRow"></div>
+      <div class="quick-grid" id="quickGrid"></div>
+      <div class="topbar"><input class="search" id="projSearch" placeholder="Поиск по объектам..." oninput="renderProjects()"></div>
+      <div class="tabs" id="statusTabs"></div>
+      <div id="projectsList"></div>
+    </section>
+
+    <!-- ===== КЛИЕНТЫ (список объектов как источник) убрано, показываем сотрудников для owner ===== -->
+    <section class="screen" id="screen-team">
+      <div class="topbar"><input class="search" id="teamSearch" placeholder="Поиск сотрудника..." oninput="renderTeam()"></div>
+      <div id="teamList"></div>
+    </section>
+
+    <!-- ===== КАЛЕНДАРЬ РАБОЧИХ ДНЕЙ ===== -->
+    <section class="screen" id="screen-calendar">
+      <div id="calendarContent"></div>
+    </section>
+
+    <!-- ===== ДЕТАЛИ ОБЪЕКТА ===== -->
+    <section class="screen" id="screen-detail">
+      <span class="backlink" onclick="goTo('projects')">‹ Все объекты</span>
+      <div class="tabbar-inner tabbar-scroll">
+        <div class="tab active" id="detailTabInfo" onclick="setDetailTab('info')">Инфо</div>
+        <div class="tab" id="detailTabTasks" onclick="setDetailTab('tasks')">Задачи</div>
+        <div class="tab" id="detailTabChat" onclick="setDetailTab('chat')">Чат</div>
+        <div class="tab" id="detailTabReports" onclick="setDetailTab('reports')">Отчёты</div>
+        <div class="tab" id="detailTabDocs" onclick="setDetailTab('docs')">Документы</div>
+        <div class="tab" id="detailTabEstimate" onclick="setDetailTab('estimate')">Смета</div>
+        <div class="tab" id="detailTabFinance" onclick="setDetailTab('finance')">Финансы</div>
+        <div class="tab" id="detailTabHistory" onclick="setDetailTab('history')">История</div>
+      </div>
+      <div id="detailContent"></div>
+    </section>
+
+    <!-- ===== ПРОФИЛЬ ===== -->
+    <section class="screen" id="screen-profile">
+      <div id="profileContent"></div>
+    </section>
+
+    <!-- ===== ПРОФИЛЬ СОТРУДНИКА (для руководителя) ===== -->
+    <section class="screen" id="screen-employee-profile">
+      <span class="backlink" onclick="goToEmployeeProfileBack()">‹ Назад</span>
+      <div id="employeeProfileContent"></div>
+    </section>
+
+  </main>
+
+  <button class="fab" id="fabBtn">+</button>
+
+  <nav class="bottom">
+    <button class="navbtn active" data-screen="projects"><span class="ic">🏗️</span>Объекты</button>
+    <button class="navbtn" data-screen="calendar" id="navCalendarBtn"><span class="ic">📅</span>Календарь</button>
+    <button class="navbtn" data-screen="team" id="navTeamBtn" style="display:none;"><span class="ic">👷</span>Сотрудники</button>
+    <button class="navbtn" data-screen="profile"><span class="ic">👤</span>Профиль</button>
+  </nav>
+</div>
+
+<!-- ============ МОДАЛКА: НОВЫЙ/РЕДАКТ ОБЪЕКТ ============ -->
+<div class="overlay" id="modalProject">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="projModalTitle">Новый объект</h2>
+      <button class="modal-close" onclick="closeModal('modalProject')">✕</button>
+    </div>
+    <input type="hidden" id="projId">
+    <label>Название объекта</label>
+    <input type="text" id="projName" placeholder="напр. Коттедж на ул. Садовой, 12">
+    <label>Адрес</label>
+    <input type="text" id="projAddress" placeholder="Город, улица, номер">
+    <div class="row2">
+      <div><label>Заказчик</label><input type="text" id="projClientName" placeholder="Имя клиента"></div>
+      <div><label>Телефон заказчика</label><input type="tel" id="projClientPhone" placeholder="+7..."></div>
+    </div>
+    <div class="row2">
+      <div><label>Бюджет, ₽</label><input type="number" id="projBudget" placeholder="0"></div>
+      <div><label>Статус</label>
+        <select id="projStatus">
+          <option value="active">В работе</option>
+          <option value="paused">Приостановлен</option>
+          <option value="problem">Проблема</option>
+          <option value="done">Завершён</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div><label>Дата начала</label><input type="date" id="projStart"></div>
+      <div><label>Срок сдачи</label><input type="date" id="projEnd"></div>
+    </div>
+    <label>Заметки</label>
+    <textarea id="projNotes" placeholder="Особенности объекта и т.д."></textarea>
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" id="saveProjBtn" onclick="saveProject()">Сохранить объект</button>
+    <div class="danger-link" id="deleteProjBtn" style="display:none" onclick="deleteProject()">Удалить объект</div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: ДОБАВИТЬ ЭТАП ============ -->
+<div class="overlay" id="modalStage">
+  <div class="modal">
+    <div class="modal-head"><h2>Новый этап работ</h2><button class="modal-close" onclick="closeModal('modalStage')">✕</button></div>
+    <label>Название этапа</label>
+    <input type="text" id="stageName" placeholder="напр. Заливка фундамента">
+    <label>Срок (необязательно)</label>
+    <input type="date" id="stageDate">
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" onclick="addStage()">Добавить этап</button>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: УЧАСТНИКИ ОБЪЕКТА ============ -->
+<div class="overlay" id="modalMembers">
+  <div class="modal">
+    <div class="modal-head"><h2>Добавить сотрудника</h2><button class="modal-close" onclick="closeModal('modalMembers')">✕</button></div>
+    <div id="availableMembersList"></div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: УВЕДОМЛЕНИЯ ============ -->
+<div class="overlay" id="modalNotifications">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Уведомления</h2>
+      <button class="modal-close" onclick="closeModal('modalNotifications')">✕</button>
+    </div>
+    <div id="notificationsList"></div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: ИИ-ПОМОЩНИК ============ -->
+<div class="overlay ai-modal" id="modalAi">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <h2>🤖 ИИ-помощник</h2>
+      <button class="modal-close" onclick="closeModal('modalAi')">✕</button>
+    </div>
+    <div class="ai-chat-body" id="aiChatBody"></div>
+    <div class="ai-input-row">
+      <input type="text" id="aiInput" placeholder="Спросите про объект..." onkeydown="if(event.key==='Enter') sendAiMessage()">
+      <button class="ai-send-btn" onclick="sendAiMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: НОВЫЙ/РЕДАКТ СОТРУДНИК ============ -->
+<div class="overlay" id="modalEmployee">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="empModalTitle">Новый сотрудник</h2>
+      <button class="modal-close" onclick="closeModal('modalEmployee')">✕</button>
+    </div>
+    <input type="hidden" id="empId">
+    <label>ФИО</label>
+    <input type="text" id="empName" placeholder="Иванов Иван">
+    <label>Телефон</label>
+    <input type="tel" id="empPhone" placeholder="+7...">
+    <label>Роль</label>
+    <select id="empRole">
+      <option value="worker">Рабочий</option>
+      <option value="foreman">Прораб</option>
+      <option value="owner">Руководитель</option>
+    </select>
+    <label>Код сотрудника (логин)</label>
+    <input type="text" id="empLogin" placeholder="Сгенерируется автоматически">
+    <label>Пароль</label>
+    <input type="text" id="empPass" placeholder="Пароль для входа">
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" onclick="saveEmployee()">Сохранить сотрудника</button>
+    <div class="danger-link" id="deleteEmpBtn" style="display:none" onclick="deleteEmployee()">Удалить сотрудника</div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: НОВЫЙ ОТЧЁТ ============ -->
+<div class="overlay" id="modalReport">
+  <div class="modal">
+    <div class="modal-head"><h2>Новый отчёт</h2><button class="modal-close" onclick="closeModal('modalReport')">✕</button></div>
+    <label>Комментарий</label>
+    <textarea id="reportComment" placeholder="Что сделано на объекте..."></textarea>
+    <label>Отметить выполнение этапа (необязательно)</label>
+    <select id="reportStage"><option value="">— не отмечать —</option></select>
+    <label>Фотографии (до 20 шт.)</label>
+    <div class="photo-picker-grid" id="reportPhotosGrid">
+      <div class="photo-add-btn" onclick="document.getElementById('reportPhotoInput').click()">+</div>
+    </div>
+    <input type="file" id="reportPhotoInput" accept="image/*" multiple style="display:none;">
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" id="saveReportBtn" onclick="saveReport()">Опубликовать отчёт</button>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: ЗАГРУЗКА ДОКУМЕНТА ============ -->
+<div class="overlay" id="modalDoc">
+  <div class="modal">
+    <div class="modal-head"><h2>Загрузить документ</h2><button class="modal-close" onclick="closeModal('modalDoc')">✕</button></div>
+    <label>Файл (PDF, Excel, Word, ZIP, фото)</label>
+    <input type="file" id="docFileInput" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip,image/*">
+    <div id="docFileName" style="font-size:13px; color:var(--muted); margin-top:8px;"></div>
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" id="saveDocBtn" onclick="uploadDocument()">Загрузить</button>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: ЗАДАЧА ============ -->
+<div class="overlay" id="modalTask">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="taskModalTitle">Новая задача</h2>
+      <button class="modal-close" onclick="closeModal('modalTask')">✕</button>
+    </div>
+    <input type="hidden" id="taskId">
+    <label>Что нужно сделать</label>
+    <input type="text" id="taskName" placeholder="напр. Завезти кирпич">
+    <label>Исполнитель</label>
+    <select id="taskAssignee"><option value="">— не назначен —</option></select>
+    <div class="row2">
+      <div><label>Срок</label><input type="date" id="taskDue"></div>
+      <div><label>Приоритет</label>
+        <select id="taskPriority">
+          <option value="low">Обычный</option>
+          <option value="med" selected>Средний</option>
+          <option value="high">Срочно</option>
+        </select>
+      </div>
+    </div>
+    <label>Комментарий (необязательно)</label>
+    <textarea id="taskComment" placeholder="Детали задачи..."></textarea>
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" onclick="saveTask()">Сохранить задачу</button>
+    <div class="danger-link" id="deleteTaskBtn" style="display:none" onclick="deleteTask()">Удалить задачу</div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: ПОЗИЦИЯ СМЕТЫ ============ -->
+<div class="overlay" id="modalEstItem">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="estItemModalTitle">Новая позиция</h2>
+      <button class="modal-close" onclick="closeModal('modalEstItem')">✕</button>
+    </div>
+    <input type="hidden" id="estItemId">
+    <label>Наименование работ</label>
+    <input type="text" id="estItemName" placeholder="напр. Штукатурка стен">
+    <div class="row2">
+      <div><label>Ед. изм.</label><input type="text" id="estItemUnit" placeholder="м², шт, м/п"></div>
+      <div><label>Количество</label><input type="number" id="estItemQty" placeholder="0" oninput="calcEstItemLive()"></div>
+    </div>
+    <label>Цена за единицу, ₽</label>
+    <input type="number" id="estItemPrice" placeholder="0" oninput="calcEstItemLive()">
+    <div class="info-line" style="margin-top:10px;"><span class="k">Сумма</span><span class="v" id="estItemSumPreview" style="font-weight:700; color:var(--accent2);">0 ₽</span></div>
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" onclick="saveEstItem()">Сохранить позицию</button>
+    <div class="danger-link" id="deleteEstItemBtn" style="display:none" onclick="deleteEstItem()">Удалить позицию</div>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: СОХРАНИТЬ КАК ШАБЛОН ============ -->
+<div class="overlay" id="modalSaveTpl">
+  <div class="modal">
+    <div class="modal-head"><h2>Сохранить как шаблон</h2><button class="modal-close" onclick="closeModal('modalSaveTpl')">✕</button></div>
+    <label>Название шаблона</label>
+    <input type="text" id="tplName" placeholder="напр. Полный цикл отделки стен">
+    <button class="btn btn-accent btn-block" style="margin-top:16px;" onclick="saveAsTemplate()">Сохранить шаблон</button>
+  </div>
+</div>
+
+<!-- ============ МОДАЛКА: ШАБЛОНЫ СМЕТ ============ -->
+<div class="overlay" id="modalTemplates">
+  <div class="modal">
+    <div class="modal-head"><h2>Шаблоны смет</h2><button class="modal-close" onclick="closeModal('modalTemplates')">✕</button></div>
+    <div id="templatesList"></div>
+  </div>
+</div>
+
+<!-- ============ LIGHTBOX: ПРОСМОТР ФОТО ============ -->
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)">‹</button>
+  <img id="lightboxImg" src="">
+  <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)">›</button>
+  <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+
+<input type="file" id="photoInput" accept="image/*" multiple style="display:none;">
+
+
+<script>
+/* ==================================================================
+   SUPABASE CONNECTION
+================================================================== */
+const SUPABASE_URL = 'https://agdcoaprtwywqofoahwv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_upQbojUHaYDlVG5npaKvvA_Plg10A0F';
+
+if(typeof supabase === 'undefined'){
+  document.body.innerHTML = `
+    <div style="min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; background:#0f1115; color:#e8eaed; font-family:sans-serif; text-align:center;">
+      <div>
+        <div style="font-size:40px; margin-bottom:14px;">⚠️</div>
+        <div style="font-size:17px; font-weight:700; margin-bottom:8px;">Не удалось загрузить библиотеку Supabase</div>
+        <div style="font-size:14px; color:#8b90a0; line-height:1.6;">Проверьте подключение к интернету и обновите страницу.<br>Если проблема повторяется — сообщите разработчику.</div>
+      </div>
+    </div>
+  `;
+  throw new Error('Supabase library failed to load');
+}
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const SESSION_KEY = 'stroycrm_session_v1';
+
+let ME = null;              // текущий залогиненный пользователь
+let ALL_USERS = [];
+let ALL_PROJECTS = [];
+let MY_MEMBERSHIPS = [];    // project_ids к которым у меня есть доступ (для не-owner)
+let currentTab = 'all';
+let currentDetailId = null;
+let currentDetailTab = 'info';
+let chatChannel = null;
+let currentStages = [];
+let currentMessages = [];
+let pendingPhotoDataUrl = null;
+
+const STATUS_LABELS = {
+  active:{label:'В работе', cls:'badge-active'},
+  paused:{label:'Приостановлен', cls:'badge-paused'},
+  problem:{label:'Проблема', cls:'badge-problem'},
+  done:{label:'Завершён', cls:'badge-done'}
+};
+const ROLE_LABELS = { owner:'Руководитель', foreman:'Прораб', worker:'Рабочий' };
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function initials(name){
+  if(!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  return (parts[0]?.[0]||'') .toUpperCase() + (parts[1]?.[0]||'').toUpperCase();
+}
+function genLogin(role){
+  const prefix = role==='owner' ? 'RUK' : role==='foreman' ? 'PRO' : 'RAB';
+  const num = Math.floor(1000 + Math.random()*9000);
+  return `${prefix}-${num}`;
+}
+function genPassword(){
+  return Math.random().toString(36).slice(-6);
+}
+
+/* ==================================================================
+   AUTH
+================================================================== */
+async function doLogin(){
+  const login = document.getElementById('loginCode').value.trim().toUpperCase();
+  const pass = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+
+  if(!login || !pass){
+    errEl.textContent = 'Введите код сотрудника и пароль';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Входим...';
+
+  try{
+    const { data, error } = await sb.from('app_users').select('*').eq('login', login).eq('password', pass).maybeSingle();
+    if(error) throw error;
+    if(!data){
+      errEl.textContent = 'Неверный код сотрудника или пароль';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Войти';
+      return;
+    }
+    ME = data;
+    localStorage.setItem(SESSION_KEY, JSON.stringify({login, pass}));
+    await startApp();
+  }catch(e){
+    errEl.textContent = 'Ошибка: ' + (e.message || e.toString() || 'неизвестная проблема подключения');
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Войти';
+  }
+}
+
+function logout(){
+  localStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+async function tryAutoLogin(){
+  const raw = localStorage.getItem(SESSION_KEY);
+  if(!raw) { showLogin(); return; }
+  try{
+    const { login, pass } = JSON.parse(raw);
+    const { data, error } = await sb.from('app_users').select('*').eq('login', login).eq('password', pass).maybeSingle();
+    if(error || !data){ showLogin(); return; }
+    ME = data;
+    await startApp();
+  }catch(e){ showLogin(); }
+}
+
+function showLogin(){
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+
+/* ==================================================================
+   APP START
+================================================================== */
+async function startApp(){
+  if(ME.role !== 'owner' && !ME.regulation_accepted){
+    showRegulationScreen();
+    return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  document.getElementById('userAvatarChip').textContent = initials(ME.full_name);
+  document.getElementById('userNameChip').textContent = ME.full_name;
+
+  if(ME.role === 'owner'){
+    document.getElementById('navTeamBtn').style.display = 'flex';
+    document.getElementById('navCalendarBtn').style.display = 'none';
+  }
+
+  await loadAllData();
+  render();
+  initNotifications();
+}
+
+const REGULATION_POINTS = [
+  { icon:'🧹', title:'Чистота на объекте', text:'Каждый сотрудник обязан поддерживать порядок на рабочем месте. По окончании рабочего дня строительный мусор, инструмент и материалы должны быть убраны. Чистый объект — показатель профессионализма.' },
+  { icon:'💬', title:'Коммуникация', text:'Все важные вопросы, изменения, проблемы и непредвиденные ситуации необходимо сразу сообщать прорабу или руководителю. Самостоятельно скрывать ошибки или принимать решения, влияющие на качество работ, запрещено.' },
+  { icon:'📦', title:'Планирование материалов', text:'Материалы и расходники должны заказываться заранее. Если сотрудник видит, что чего-либо не хватит для продолжения работ, он обязан сообщить об этом минимум за 1–2 дня.' },
+  { icon:'📋', title:'Ежедневная отчётность', text:'По окончании рабочего дня необходимо предоставить краткий отчёт о выполненных работах с фотографиями через CRM. Отчёт должен отражать реальное состояние объекта.' },
+  { icon:'🛠️', title:'Ответственность за инструмент и качество', text:'Каждый сотрудник несёт ответственность за выданный инструмент, оборудование и качество выполненной работы. Любые повреждения или поломки необходимо сразу сообщать руководителю.' },
+  { icon:'⏰', title:'Самостоятельность и дисциплина', text:'Сотрудник должен самостоятельно организовывать своё рабочее время, соблюдать технологию выполнения работ и не ждать постоянного контроля. Опоздания, самовольный уход с объекта и нарушение графика недопустимы.' },
+  { icon:'🤝', title:'Уважение к клиенту и коллективу', text:'На объекте запрещены грубость, конфликты, нецензурная лексика, употребление алкоголя и любых запрещённых веществ. Каждый сотрудник обязан уважительно относиться к заказчику, коллегам и имуществу клиента, поддерживая высокий уровень культуры общения.' }
+];
+
+function showRegulationScreen(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'none';
+  const scr = document.getElementById('regulationScreen');
+  scr.style.display = 'flex';
+  document.getElementById('regulationList').innerHTML = REGULATION_POINTS.map((p,i)=>`
+    <div class="reg-point">
+      <div class="reg-ic">${p.icon}</div>
+      <div class="reg-body">
+        <div class="reg-title">${i+1}. ${p.title}</div>
+        <div class="reg-text">${p.text}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function acceptRegulation(){
+  const checkbox = document.getElementById('regAgreeCheckbox');
+  if(!checkbox.checked){
+    alert('Чтобы продолжить, подтвердите согласие с регламентом');
+    return;
+  }
+  const btn = document.getElementById('regAcceptBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Сохраняем...';
+
+  const { error } = await sb.from('app_users').update({regulation_accepted:true}).eq('id', ME.id);
+  if(error){
+    alert('Ошибка сохранения: ' + error.message);
+    btn.disabled = false;
+    btn.textContent = 'Подтвердить и продолжить';
+    return;
+  }
+  ME.regulation_accepted = true;
+  document.getElementById('regulationScreen').style.display = 'none';
+  await startApp();
+}
+
+async function loadAllData(){
+  const { data: users } = await sb.from('app_users').select('*').order('created_at');
+  ALL_USERS = users || [];
+
+  let projQuery = sb.from('projects').select('*').order('updated_at', {ascending:false});
+  const { data: projects } = await projQuery;
+  ALL_PROJECTS = projects || [];
+
+  if(ME.role !== 'owner'){
+    const { data: memberships } = await sb.from('project_members').select('project_id').eq('user_id', ME.id);
+    MY_MEMBERSHIPS = (memberships||[]).map(m=>m.project_id);
+    ALL_PROJECTS = ALL_PROJECTS.filter(p => MY_MEMBERSHIPS.includes(p.id));
+  }
+}
+
+function visibleProjects(){
+  return ALL_PROJECTS;
+}
+
+/* ==================================================================
+   NAVIGATION
+================================================================== */
+document.querySelectorAll('.navbtn').forEach(btn=>{
+  btn.addEventListener('click', ()=> goTo(btn.dataset.screen));
+});
+
+function goTo(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.screen===screen);
+  });
+  document.getElementById('fabBtn').style.display = (screen==='projects' && ME.role!=='worker') ? 'flex' :
+                                                      (screen==='team' && ME.role==='owner') ? 'flex' : 'none';
+  document.getElementById('fabBtn').dataset.mode = screen;
+
+  const sub = document.getElementById('headerSub');
+  if(screen==='projects') sub.textContent = ME.role==='owner' ? 'Все объекты компании' : 'Ваши объекты';
+  if(screen==='team') sub.textContent = 'Сотрудники и прорабы';
+  if(screen==='calendar') sub.textContent = ME.role==='owner' ? 'График работы команды' : 'Ваш рабочий график';
+  if(screen==='profile') sub.textContent = 'Ваш аккаунт';
+  if(screen==='employee-profile') sub.textContent = 'Профиль сотрудника';
+  if(screen==='detail'){
+    sub.textContent = 'Карточка объекта';
+    if(chatChannel){ sb.removeChannel(chatChannel); chatChannel=null; }
+  }
+
+  if(screen==='team') renderTeam();
+  if(screen==='profile') renderProfile();
+  if(screen==='calendar') renderCalendar();
+  if(screen==='employee-profile') renderEmployeeProfile();
+  if(screen==='projects') render();
+}
+
+document.getElementById('fabBtn').addEventListener('click', ()=>{
+  const mode = document.getElementById('fabBtn').dataset.mode || 'projects';
+  if(mode === 'team') openEmployeeModal();
+  else openProjectModal();
+});
+
+/* ==================================================================
+   RENDER: ОБЪЕКТЫ
+================================================================== */
+function computeProgress(stages){
+  if(!stages || stages.length===0) return 0;
+  const done = stages.filter(s=>s.done).length;
+  return Math.round(done / stages.length * 100);
+}
+
+function renderStats(){
+  const list = visibleProjects();
+  const total = list.length;
+  const active = list.filter(p=>p.status==='active').length;
+  const problem = list.filter(p=>p.status==='problem').length;
+  const done = list.filter(p=>p.status==='done').length;
+  document.getElementById('statRow').innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="lbl">Всего</div></div>
+    <div class="stat"><div class="num" style="color:var(--green)">${active}</div><div class="lbl">В работе</div></div>
+    <div class="stat"><div class="num" style="color:var(--red)">${problem}</div><div class="lbl">Проблемы</div></div>
+    <div class="stat"><div class="num" style="color:var(--blue)">${done}</div><div class="lbl">Завершено</div></div>
+  `;
+}
+
+function renderTabs(){
+  const tabs = [
+    {key:'all', label:'Все'},
+    {key:'active', label:'В работе'},
+    {key:'paused', label:'Приостановлены'},
+    {key:'problem', label:'Проблемы'},
+    {key:'done', label:'Завершённые'}
+  ];
+  document.getElementById('statusTabs').innerHTML = tabs.map(t=>
+    `<div class="tab ${currentTab===t.key?'active':''}" onclick="setTab('${t.key}')">${t.label}</div>`
+  ).join('');
+}
+function setTab(key){ currentTab = key; renderTabs(); renderProjects(); }
+
+async function renderProjects(){
+  const q = (document.getElementById('projSearch').value || '').toLowerCase().trim();
+  let list = visibleProjects().slice();
+  if(currentTab !== 'all') list = list.filter(p=>p.status===currentTab);
+  if(q) list = list.filter(p => (p.name||'').toLowerCase().includes(q) || (p.address||'').toLowerCase().includes(q));
+
+  const container = document.getElementById('projectsList');
+  if(list.length===0){
+    container.innerHTML = `<div class="empty"><div class="ic">🏗️</div>${ME.role==='owner' ? 'Пока нет объектов.<br>Нажмите «+», чтобы добавить первый.' : 'Вас пока не добавили ни к одному объекту.'}</div>`;
+    return;
+  }
+
+  // подтягиваем прогресс по этапам для каждого объекта
+  const ids = list.map(p=>p.id);
+  const { data: allStages } = await sb.from('project_stages').select('*').in('project_id', ids);
+  const stagesByProj = {};
+  (allStages||[]).forEach(s=>{
+    if(!stagesByProj[s.project_id]) stagesByProj[s.project_id] = [];
+    stagesByProj[s.project_id].push(s);
+  });
+
+  container.innerHTML = list.map(p=>{
+    const st = STATUS_LABELS[p.status] || STATUS_LABELS.active;
+    const stages = stagesByProj[p.id] || [];
+    const progress = computeProgress(stages);
+    return `
+      <div class="card" onclick="openDetail('${p.id}')">
+        <div class="proj-head">
+          <div>
+            <p class="proj-title">${escapeHtml(p.name || 'Без названия')}</p>
+            <p class="proj-sub">${escapeHtml(p.address || 'Адрес не указан')}${p.client_name ? ' · '+escapeHtml(p.client_name) : ''}</p>
+          </div>
+          <span class="badge ${st.cls}">${st.label}</span>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+          <div class="progress-label">
+            <span>${stages.filter(s=>s.done).length}/${stages.length} этапов</span>
+            <span>${progress}%</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ==================================================================
+   RENDER: КОМАНДА (только owner)
+================================================================== */
+function renderTeam(){
+  const q = (document.getElementById('teamSearch').value || '').toLowerCase().trim();
+  let list = ALL_USERS.slice().filter(u=>u.id!==ME.id).sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||''));
+  if(q) list = list.filter(u => (u.full_name||'').toLowerCase().includes(q) || (u.login||'').toLowerCase().includes(q));
+
+  const container = document.getElementById('teamList');
+  if(list.length===0){
+    container.innerHTML = `<div class="empty"><div class="ic">👷</div>Пока нет сотрудников.<br>Нажмите «+», чтобы добавить.</div>`;
+    return;
+  }
+  container.innerHTML = list.map(u=>`
+    <div class="member-row">
+      <div class="m-ava" onclick="openEmployeeProfile('${u.id}')" style="cursor:pointer;">${initials(u.full_name)}</div>
+      <div class="m-info" onclick="openEmployeeProfile('${u.id}')" style="cursor:pointer;">
+        <div class="m-name">${escapeHtml(u.full_name)}</div>
+        <div class="m-role">${ROLE_LABELS[u.role]||u.role} · код: ${escapeHtml(u.login)}</div>
+      </div>
+      ${u.phone ? `<a class="call-btn" href="tel:${escapeHtml(u.phone)}" onclick="event.stopPropagation()">📞</a>` : ''}
+      <button class="chat-icon-btn" style="width:36px;height:36px;font-size:14px;" onclick="event.stopPropagation(); openEmployeeModal('${u.id}')">✏️</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('teamSearch') && document.getElementById('teamSearch').addEventListener('input', renderTeam);
+
+/* ==================================================================
+   ПРОФИЛЬ СОТРУДНИКА (для руководителя)
+================================================================== */
+let empProfileId = null;
+let empProfileFromScreen = 'team';
+let empCalViewDate = new Date();
+
+function openEmployeeProfile(userId){
+  empProfileId = userId;
+  empProfileFromScreen = document.querySelector('.screen.active')?.id === 'screen-detail' ? 'detail' : 'team';
+  empCalViewDate = new Date();
+  goTo('employee-profile');
+}
+
+function goToEmployeeProfileBack(){
+  if(empProfileFromScreen === 'detail' && currentDetailId){
+    goTo('detail');
+    setDetailTab('info');
+  } else {
+    goTo('team');
+  }
+}
+
+async function renderEmployeeProfile(){
+  const container = document.getElementById('employeeProfileContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:22px; height:22px;"></span></div>`;
+
+  const u = ALL_USERS.find(x=>x.id===empProfileId);
+  if(!u){ container.innerHTML = '<div class="empty">Сотрудник не найден</div>'; return; }
+
+  const [{data: memberships}, {data: reports}, {data: history}] = await Promise.all([
+    sb.from('project_members').select('*, projects(id,name)').eq('user_id', u.id),
+    sb.from('project_reports').select('*, projects(name)').eq('user_id', u.id).order('created_at', {ascending:false}).limit(20),
+    sb.from('project_history').select('*, projects(name)').eq('user_id', u.id).order('created_at', {ascending:false}).limit(15)
+  ]);
+
+  const year = empCalViewDate.getFullYear();
+  const month = empCalViewDate.getMonth();
+  const monthStart = ymd(new Date(year, month, 1));
+  const monthEnd = ymd(new Date(year, month+1, 0));
+  const { data: schedule } = await sb.from('work_schedule').select('work_date').eq('user_id', u.id).gte('work_date', monthStart).lte('work_date', monthEnd);
+  const workingDays = new Set((schedule||[]).map(s=>s.work_date));
+
+  container.innerHTML = `
+    <div class="card" style="text-align:center; padding:24px 16px;">
+      <div class="user-avatar" style="width:60px; height:60px; font-size:21px; margin:0 auto 10px;">${initials(u.full_name)}</div>
+      <div style="font-size:18px; font-weight:700;">${escapeHtml(u.full_name)}</div>
+      <div style="font-size:13px; color:var(--muted); margin-top:3px;">${ROLE_LABELS[u.role]||u.role}</div>
+      <div style="display:flex; gap:8px; margin-top:14px; justify-content:center;">
+        ${u.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${escapeHtml(u.phone)}" style="text-decoration:none;">📞 ${escapeHtml(u.phone)}</a>` : ''}
+        <button class="btn btn-ghost btn-sm" onclick="openEmployeeModal('${u.id}')">✏️ Изменить данные</button>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Данные аккаунта</h3>
+      <div class="card">
+        <div class="info-line"><span class="k">Код сотрудника</span><span class="v">${escapeHtml(u.login)}</span></div>
+        <div class="info-line"><span class="k">Телефон</span><span class="v">${u.phone ? escapeHtml(u.phone) : '—'}</span></div>
+        <div class="info-line"><span class="k">Объектов назначено</span><span class="v">${(memberships||[]).length}</span></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Рабочие дни — ${MONTH_LABELS[month]} ${year}</h3>
+      <div class="card">
+        <div class="cal-header" style="margin-bottom:10px;">
+          <button class="cal-nav-btn" onclick="empCalNav(-1)">‹</button>
+          <span style="font-size:13px; color:var(--muted);">${workingDays.size} рабочих дней</span>
+          <button class="cal-nav-btn" onclick="empCalNav(1)">›</button>
+        </div>
+        <div class="cal-weekdays">${WEEKDAY_LABELS.map(d=>`<div>${d}</div>`).join('')}</div>
+        <div class="cal-grid" id="empCalGrid"></div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Объекты</h3>
+      ${(!memberships || memberships.length===0) ? `<div class="empty" style="padding:16px;">Не назначен ни на один объект</div>` :
+        memberships.map(m=>`<div class="client-row" onclick="openDetail('${m.projects.id}')" style="cursor:pointer;"><div class="client-name">${escapeHtml(m.projects.name)}</div></div>`).join('')
+      }
+    </div>
+
+    <div class="detail-section">
+      <h3>Последние отчёты (${(reports||[]).length})</h3>
+      ${(!reports || reports.length===0) ? `<div class="empty" style="padding:16px;">Пока нет отчётов</div>` :
+        reports.map(r=>{
+          const time = new Date(r.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+          return `
+            <div class="report-card">
+              <div class="report-time" style="margin-bottom:6px;">${escapeHtml(r.projects?.name||'')} · ${time}</div>
+              ${r.comment ? `<div class="report-comment" style="margin-bottom:0;">${escapeHtml(r.comment)}</div>` : ''}
+              ${r.photos && r.photos.length ? `<div class="report-photos" style="margin-top:8px;">${r.photos.slice(0,3).map((u2,i)=>`<img src="${u2}" onclick='openReportLightbox(${JSON.stringify(r.photos)},${i})'>`).join('')}</div>` : ''}
+            </div>
+          `;
+        }).join('')
+      }
+    </div>
+
+    <div class="detail-section">
+      <h3>История действий</h3>
+      ${(!history || history.length===0) ? `<div class="empty" style="padding:16px;">Пока нет действий</div>` :
+        `<div class="card">` + history.map(h=>{
+          const time = new Date(h.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+          return `<div class="info-line"><span class="k">${escapeHtml(h.action)} — ${escapeHtml(h.projects?.name||'')}</span><span class="v" style="font-size:11.5px;">${time}</span></div>`;
+        }).join('') + `</div>`
+      }
+    </div>
+  `;
+
+  drawEmpCalGrid(year, month, workingDays);
+}
+
+function drawEmpCalGrid(year, month, workingDays){
+  const grid = document.getElementById('empCalGrid');
+  if(!grid) return;
+  const firstDay = new Date(year, month, 1);
+  let startOffset = firstDay.getDay() - 1;
+  if(startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = ymd(new Date());
+
+  let html = '';
+  for(let i=0;i<startOffset;i++) html += `<div class="cal-day empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = ymd(new Date(year, month, d));
+    const isWorking = workingDays.has(dateStr);
+    const isToday = dateStr === todayStr;
+    html += `<div class="cal-day ${isWorking?'working':'off'} ${isToday?'today':''}">${d}${isWorking?'<div class="dot"></div>':''}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function empCalNav(dir){
+  empCalViewDate = new Date(empCalViewDate.getFullYear(), empCalViewDate.getMonth()+dir, 1);
+  renderEmployeeProfile();
+}
+
+
+/* ==================================================================
+   ДЕТАЛИ ОБЪЕКТА
+================================================================== */
+function openDetail(id){
+  currentDetailId = id;
+  currentDetailTab = 'info';
+  goTo('detail');
+  setDetailTab('info');
+}
+
+const DETAIL_TABS = ['info','tasks','chat','reports','docs','estimate','finance','history'];
+function setDetailTab(tab){
+  currentDetailTab = tab;
+  DETAIL_TABS.forEach(t=>{
+    const el = document.getElementById('detailTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if(el) el.classList.toggle('active', tab===t);
+  });
+  if(tab!=='chat' && chatChannel){ sb.removeChannel(chatChannel); chatChannel=null; }
+  if(tab==='info') renderDetailInfo();
+  else if(tab==='tasks') renderDetailTasks();
+  else if(tab==='chat') renderDetailChat();
+  else if(tab==='reports') renderDetailReports();
+  else if(tab==='docs') renderDetailDocs();
+  else if(tab==='estimate') renderDetailEstimate();
+  else if(tab==='finance') renderDetailFinance();
+  else if(tab==='history') renderDetailHistory();
+}
+
+async function renderDetailInfo(){
+  if(chatChannel){ sb.removeChannel(chatChannel); chatChannel=null; }
+  const p = ALL_PROJECTS.find(x=>x.id===currentDetailId);
+  const container = document.getElementById('detailContent');
+  if(!p){ container.innerHTML = '<div class="empty">Объект не найден</div>'; return; }
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:22px; height:22px;"></span></div>`;
+
+  const [{data: stages}, {data: members}] = await Promise.all([
+    sb.from('project_stages').select('*').eq('project_id', p.id).order('created_at'),
+    sb.from('project_members').select('*, app_users(*)').eq('project_id', p.id)
+  ]);
+  currentStages = stages || [];
+
+  const st = STATUS_LABELS[p.status] || STATUS_LABELS.active;
+  const progress = computeProgress(currentStages);
+  const canEdit = ME.role === 'owner' || ME.role === 'foreman';
+  const canManageMembers = ME.role === 'owner';
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="proj-head">
+        <div>
+          <p class="proj-title" style="font-size:18px">${escapeHtml(p.name)}</p>
+          <p class="proj-sub">${escapeHtml(p.address||'')}</p>
+        </div>
+        <span class="badge ${st.cls}">${st.label}</span>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+        <div class="progress-label"><span>Прогресс</span><span>${progress}%</span></div>
+      </div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        ${canEdit ? `<button class="btn btn-ghost btn-sm" style="flex:1" onclick="openProjectModal('${p.id}')">✏️ Редактировать</button>` : ''}
+        ${p.client_phone ? `<a class="btn btn-ghost btn-sm" style="flex:1; text-decoration:none;" href="tel:${escapeHtml(p.client_phone)}">📞 Клиенту</a>` : ''}
+      </div>
+      <button class="ai-fab-btn" onclick="openAiAssistant()">🤖 Спросить ИИ-помощника про объект</button>
+    </div>
+
+    <div class="detail-section">
+      <h3>Информация</h3>
+      <div class="card">
+        <div class="info-line"><span class="k">Заказчик</span><span class="v">${p.client_name ? escapeHtml(p.client_name) : '—'}</span></div>
+        <div class="info-line"><span class="k">Бюджет</span><span class="v">${p.budget ? Number(p.budget).toLocaleString('ru-RU')+' ₽' : '—'}</span></div>
+        <div class="info-line"><span class="k">Начало</span><span class="v">${p.start_date || '—'}</span></div>
+        <div class="info-line"><span class="k">Срок сдачи</span><span class="v">${p.end_date || '—'}</span></div>
+        ${p.notes ? `<div class="info-line"><span class="k">Заметки</span><span class="v" style="max-width:60%;">${escapeHtml(p.notes)}</span></div>` : ''}
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <h3>Этапы работ (${currentStages.filter(s=>s.done).length}/${currentStages.length})</h3>
+      ${currentStages.length===0 ? `<div class="empty" style="padding:24px 10px;">Этапов пока нет</div>` : currentStages.map(s=>`
+        <div class="stage-item">
+          <div class="stage-check ${s.done?'done':''}" onclick="toggleStage('${s.id}')">${s.done?'✓':''}</div>
+          <div style="flex:1">
+            <div class="stage-name ${s.done?'done':''}">${escapeHtml(s.name)}</div>
+            ${s.due_date ? `<div style="font-size:11.5px; color:var(--muted); margin-top:2px;">до ${s.due_date}</div>` : ''}
+          </div>
+          ${canEdit ? `<button class="stage-del" onclick="deleteStage('${s.id}')">🗑️</button>` : ''}
+        </div>
+      `).join('')}
+      ${canEdit ? `<button class="btn btn-ghost btn-block" style="margin-top:8px;" onclick="openStageModal()">+ Добавить этап</button>` : ''}
+    </div>
+
+    <div class="detail-section">
+      <h3>Команда на объекте ${canManageMembers ? `<span style="cursor:pointer; color:var(--accent); font-size:13px;" onclick="openMembersModal('${p.id}')">+ добавить</span>` : ''}</h3>
+      ${(!members || members.length===0) ? `<div class="empty" style="padding:20px 10px;">Пока никто не назначен</div>` : members.map(m=>`
+        <div class="member-row" ${ME.role==='owner' ? `onclick="openEmployeeProfile('${m.app_users.id}')" style="cursor:pointer;"` : ''}>
+          <div class="m-ava">${initials(m.app_users.full_name)}</div>
+          <div class="m-info">
+            <div class="m-name">${escapeHtml(m.app_users.full_name)}</div>
+            <div class="m-role">${ROLE_LABELS[m.app_users.role]||m.app_users.role}</div>
+          </div>
+          ${m.app_users.phone ? `<a class="call-btn" href="tel:${escapeHtml(m.app_users.phone)}" onclick="event.stopPropagation()">📞</a>` : ''}
+          ${canManageMembers ? `<button class="member-del" onclick="event.stopPropagation(); removeMember('${m.id}')">✕</button>` : ''}
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function toggleStage(stageId){
+  const s = currentStages.find(x=>x.id===stageId);
+  const newDone = !s.done;
+  await sb.from('project_stages').update({done:newDone}).eq('id', stageId);
+  await sb.from('projects').update({updated_at:new Date().toISOString()}).eq('id', currentDetailId);
+  logHistory(newDone ? `отметил этап «${s.name}» как выполненный` : `снял отметку выполнения с этапа «${s.name}»`);
+  renderDetailInfo();
+}
+
+async function deleteStage(stageId){
+  await sb.from('project_stages').delete().eq('id', stageId);
+  renderDetailInfo();
+}
+
+function openStageModal(){
+  document.getElementById('stageName').value = '';
+  document.getElementById('stageDate').value = '';
+  openModal('modalStage');
+}
+async function addStage(){
+  const name = document.getElementById('stageName').value.trim();
+  if(!name){ alert('Введите название этапа'); return; }
+  await sb.from('project_stages').insert({
+    project_id: currentDetailId, name, due_date: document.getElementById('stageDate').value || null
+  });
+  await sb.from('projects').update({updated_at:new Date().toISOString()}).eq('id', currentDetailId);
+  logHistory(`добавил этап «${name}»`);
+  closeModal('modalStage');
+  renderDetailInfo();
+}
+
+/* ============ УЧАСТНИКИ ОБЪЕКТА ============ */
+async function openMembersModal(projId){
+  const { data: members } = await sb.from('project_members').select('user_id').eq('project_id', projId);
+  const memberIds = (members||[]).map(m=>m.user_id);
+  const available = ALL_USERS.filter(u=>u.role!=='owner' && !memberIds.includes(u.id));
+
+  const list = document.getElementById('availableMembersList');
+  if(available.length===0){
+    list.innerHTML = `<div class="empty">Все сотрудники уже добавлены на этот объект, или у вас пока нет сотрудников.</div>`;
+  } else {
+    list.innerHTML = available.map(u=>`
+      <div class="member-row" onclick="addMember('${projId}','${u.id}')">
+        <div class="m-ava">${initials(u.full_name)}</div>
+        <div class="m-info">
+          <div class="m-name">${escapeHtml(u.full_name)}</div>
+          <div class="m-role">${ROLE_LABELS[u.role]||u.role}</div>
+        </div>
+        <span style="color:var(--accent); font-size:20px;">+</span>
+      </div>
+    `).join('');
+  }
+  openModal('modalMembers');
+}
+async function addMember(projId, userId){
+  await sb.from('project_members').insert({project_id: projId, user_id: userId});
+  closeModal('modalMembers');
+  renderDetailInfo();
+}
+async function removeMember(memberRowId){
+  if(!confirm('Убрать сотрудника с этого объекта?')) return;
+  await sb.from('project_members').delete().eq('id', memberRowId);
+  renderDetailInfo();
+}
+
+/* ==================================================================
+   ЧАТ (realtime)
+================================================================== */
+let replyingTo = null;
+let pendingChatPhotos = [];
+let viewportHandlerAttached = false;
+
+function attachViewportHandler(){
+  if(viewportHandlerAttached || !window.visualViewport) return;
+  viewportHandlerAttached = true;
+  window.visualViewport.addEventListener('resize', ()=>{
+    const wrap = document.querySelector('.chat-wrap');
+    const inputFixed = document.querySelector('.chat-input-fixed');
+    if(!wrap) return;
+    const keyboardHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    const kb = keyboardHeight > 60 ? keyboardHeight : 0;
+    wrap.style.height = `calc(100vh - 260px - ${kb}px)`;
+    if(inputFixed) inputFixed.style.transform = kb > 0 ? `translateY(-${kb}px)` : 'translateY(0)';
+    const msgs = document.getElementById('chatMessages');
+    if(msgs) msgs.scrollTop = msgs.scrollHeight;
+  });
+  window.visualViewport.addEventListener('scroll', ()=>{
+    const inputFixed = document.querySelector('.chat-input-fixed');
+    if(!inputFixed) return;
+    const keyboardHeight = window.innerHeight - window.visualViewport.height - window.visualViewport.offsetTop;
+    const kb = keyboardHeight > 60 ? keyboardHeight : 0;
+    inputFixed.style.transform = kb > 0 ? `translateY(-${kb}px)` : 'translateY(0)';
+  });
+}
+
+async function renderDetailChat(){
+  const container = document.getElementById('detailContent');
+  const p = ALL_PROJECTS.find(x=>x.id===currentDetailId);
+  container.innerHTML = `
+    <div class="chat-wrap">
+      <div id="pinnedWrap"></div>
+      <div class="chat-messages" id="chatMessages"><div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div></div>
+      <div class="chat-input-fixed">
+        <div class="reply-preview" id="replyPreview">
+          <span class="rp-text" id="replyPreviewText"></span>
+          <button class="rp-close" onclick="cancelReply()">✕</button>
+        </div>
+        <div class="photo-stage-preview" id="photoStagePreview"></div>
+        <div id="uploadingIndicator"></div>
+        <div class="chat-input-row">
+          <button class="chat-icon-btn" onclick="document.getElementById('photoInput').click()">📷</button>
+          <button class="chat-icon-btn" id="voiceBtn" onclick="toggleVoiceRecording()">🎤</button>
+          <input type="text" id="chatInput" placeholder="Сообщение...">
+          <button class="chat-send" onclick="sendMessage()">➤</button>
+        </div>
+      </div>
+    </div>
+  `;
+  attachViewportHandler();
+
+  const { data: messages } = await sb.from('project_messages').select('*, app_users(full_name)').eq('project_id', currentDetailId).order('created_at');
+  currentMessages = messages || [];
+  drawMessages();
+  drawPinned();
+
+  if(chatChannel) sb.removeChannel(chatChannel);
+  chatChannel = sb.channel('chat-'+currentDetailId)
+    .on('postgres_changes', {event:'INSERT', schema:'public', table:'project_messages', filter:`project_id=eq.${currentDetailId}`}, async (payload)=>{
+      const { data: author } = await sb.from('app_users').select('full_name').eq('id', payload.new.user_id).maybeSingle();
+      currentMessages.push({...payload.new, app_users: author});
+      drawMessages();
+    })
+    .on('postgres_changes', {event:'UPDATE', schema:'public', table:'project_messages', filter:`project_id=eq.${currentDetailId}`}, (payload)=>{
+      const idx = currentMessages.findIndex(m=>m.id===payload.new.id);
+      if(idx>-1){ currentMessages[idx] = {...currentMessages[idx], ...payload.new}; drawMessages(); drawPinned(); }
+    })
+    .subscribe();
+}
+
+function drawPinned(){
+  const wrap = document.getElementById('pinnedWrap');
+  if(!wrap) return;
+  const pinned = currentMessages.filter(m=>m.pinned);
+  if(pinned.length===0){ wrap.innerHTML=''; return; }
+  const last = pinned[pinned.length-1];
+  wrap.innerHTML = `
+    <div class="chat-pinned">
+      <span class="pin-ic">📌</span>
+      <span class="pin-text">${escapeHtml(last.text || '📷 Фото')}</span>
+      <button class="pin-close" onclick="togglePin('${last.id}')">✕</button>
+    </div>
+  `;
+}
+
+function photosGridHtml(urls, msgId){
+  if(!urls || urls.length===0) return '';
+  const cls = urls.length===1 ? 'n1' : urls.length===2 ? 'n2' : 'n3plus';
+  return `<div class="msg-photos-grid ${cls}">${urls.map((u,i)=>`<img src="${u}" onclick="openLightbox('${msgId}',${i})">`).join('')}</div>`;
+}
+
+function canModify(authorId){
+  if(ME.role === 'owner' || ME.role === 'foreman') return true;
+  return authorId === ME.id;
+}
+
+function drawMessages(){
+  const el = document.getElementById('chatMessages');
+  if(!el) return;
+  if(currentMessages.length===0){
+    el.innerHTML = `<div class="empty" style="padding:30px 10px;">Пока нет сообщений.<br>Напишите первым!</div>`;
+    return;
+  }
+  el.innerHTML = currentMessages.map(m=>{
+    const mine = m.user_id === ME.id;
+    const time = m.created_at ? new Date(m.created_at).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'}) : '';
+    const urls = m.photo_urls || (m.photo_url ? [m.photo_url] : []);
+    const replyMsg = m.reply_to ? currentMessages.find(x=>x.id===m.reply_to) : null;
+    const editable = !m.voice_url && canModify(m.user_id);
+    const deletable = canModify(m.user_id);
+    return `
+      <div class="msg ${mine?'mine':'theirs'}" data-id="${m.id}">
+        ${!mine ? `<div class="m-author">${escapeHtml(m.app_users?.full_name || 'Сотрудник')}</div>` : ''}
+        ${replyMsg ? `<div class="m-reply-quote">${escapeHtml((replyMsg.text||'📷 Фото').slice(0,60))}</div>` : ''}
+        ${m.voice_url ? `<div class="m-voice"><button onclick="playVoice('${m.voice_url}')">▶</button><div class="wave"></div></div>` : ''}
+        ${m.text ? `<div>${escapeHtml(m.text)}${m.edited?' <span style="opacity:.6; font-size:11px;">(изменено)</span>':''}</div>` : ''}
+        ${photosGridHtml(urls, m.id)}
+        <div class="m-time">${m.pinned?'📌 ':''}${time}</div>
+      </div>
+      <div class="msg-actions" style="align-self:${mine?'flex-end':'flex-start'};">
+        <span onclick='startReply(${JSON.stringify(m.id)})'>Ответить</span>
+        <span onclick="togglePin('${m.id}')">${m.pinned?'Открепить':'Закрепить'}</span>
+        ${editable && m.text ? `<span onclick='editMessage(${JSON.stringify(m.id)})'>Изменить</span>` : ''}
+        ${deletable ? `<span onclick="deleteMessage('${m.id}')" style="color:var(--red);">Удалить</span>` : ''}
+      </div>
+    `;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function editMessage(msgId){
+  const m = currentMessages.find(x=>x.id===msgId);
+  if(!m) return;
+  const newText = prompt('Изменить сообщение:', m.text || '');
+  if(newText===null) return;
+  const trimmed = newText.trim();
+  if(!trimmed){ alert('Сообщение не может быть пустым'); return; }
+  await sb.from('project_messages').update({text: trimmed, edited: true}).eq('id', msgId);
+  const idx = currentMessages.findIndex(x=>x.id===msgId);
+  if(idx>-1){ currentMessages[idx].text = trimmed; currentMessages[idx].edited = true; }
+  drawMessages();
+}
+
+async function deleteMessage(msgId){
+  if(!confirm('Удалить это сообщение?')) return;
+  await sb.from('project_messages').delete().eq('id', msgId);
+  currentMessages = currentMessages.filter(x=>x.id!==msgId);
+  drawMessages();
+  drawPinned();
+}
+
+function startReply(msgId){
+  const m = currentMessages.find(x=>x.id===msgId);
+  if(!m) return;
+  replyingTo = msgId;
+  document.getElementById('replyPreview').classList.add('active');
+  document.getElementById('replyPreviewText').textContent = 'Ответ на: ' + (m.text || '📷 Фото');
+  document.getElementById('chatInput').focus();
+}
+function cancelReply(){
+  replyingTo = null;
+  document.getElementById('replyPreview').classList.remove('active');
+}
+async function togglePin(msgId){
+  const m = currentMessages.find(x=>x.id===msgId);
+  await sb.from('project_messages').update({pinned: !m.pinned}).eq('id', msgId);
+}
+
+/* ---- фото в чат (несколько штук) ---- */
+document.getElementById('photoInput').addEventListener('change', (e)=>{
+  const files = Array.from(e.target.files || []);
+  pendingChatPhotos = pendingChatPhotos.concat(files).slice(0,20);
+  drawPhotoStagePreview();
+  e.target.value = '';
+});
+function drawPhotoStagePreview(){
+  const wrap = document.getElementById('photoStagePreview');
+  if(!wrap) return;
+  wrap.innerHTML = pendingChatPhotos.map((f,i)=>`
+    <div class="psp"><img src="${URL.createObjectURL(f)}"><button class="rm" onclick="removePendingPhoto(${i})">✕</button></div>
+  `).join('');
+}
+function removePendingPhoto(i){ pendingChatPhotos.splice(i,1); drawPhotoStagePreview(); }
+
+/* ---- голосовые сообщения ---- */
+let mediaRecorder = null;
+let audioChunks = [];
+async function toggleVoiceRecording(){
+  const btn = document.getElementById('voiceBtn');
+  if(mediaRecorder && mediaRecorder.state==='recording'){
+    mediaRecorder.stop();
+    btn.classList.remove('recording'); btn.textContent = '🎤';
+    return;
+  }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e=>audioChunks.push(e.data);
+    mediaRecorder.onstop = async ()=>{
+      const blob = new Blob(audioChunks, {type:'audio/webm'});
+      await sendVoiceMessage(blob);
+      stream.getTracks().forEach(t=>t.stop());
+    };
+    mediaRecorder.start();
+    btn.classList.add('recording'); btn.textContent = '⏹';
+  }catch(e){
+    alert('Не удалось получить доступ к микрофону: ' + e.message);
+  }
+}
+async function sendVoiceMessage(blob){
+  const fileName = `${currentDetailId}/voice_${Date.now()}.webm`;
+  const { error } = await sb.storage.from('project-photos').upload(fileName, blob);
+  if(error){ alert('Ошибка загрузки голосового: ' + error.message); return; }
+  const { data: pub } = sb.storage.from('project-photos').getPublicUrl(fileName);
+  await sb.from('project_messages').insert({
+    project_id: currentDetailId, user_id: ME.id, voice_url: pub.publicUrl, reply_to: replyingTo
+  });
+  cancelReply();
+}
+function playVoice(url){
+  const audio = new Audio(url);
+  audio.play();
+}
+
+/* ---- сжатие фото перед загрузкой (ускоряет отправку в разы) ---- */
+function compressImage(file, maxSize=1600, quality=0.75){
+  return new Promise((resolve)=>{
+    if(!file.type.startsWith('image/')){ resolve(file); return; }
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      img.onload = ()=>{
+        let { width, height } = img;
+        if(width > maxSize || height > maxSize){
+          if(width > height){ height = Math.round(height * maxSize / width); width = maxSize; }
+          else { width = Math.round(width * maxSize / height); height = maxSize; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob)=>{
+          if(!blob){ resolve(file); return; }
+          resolve(new File([blob], file.name.replace(/\.\w+$/, '.jpg'), {type:'image/jpeg'}));
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = ()=> resolve(file);
+      img.src = e.target.result;
+    };
+    reader.onerror = ()=> resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function sendMessage(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text && pendingChatPhotos.length===0) return;
+
+  const btn = document.querySelector('.chat-send');
+  btn.disabled = true;
+
+  let photoUrls = [];
+  if(pendingChatPhotos.length > 0){
+    const indicator = document.getElementById('uploadingIndicator');
+    let done = 0;
+    indicator.innerHTML = `<div class="chat-uploading"><span class="spinner" style="border-top-color:var(--accent);"></span> Загрузка фото ${done}/${pendingChatPhotos.length}...</div>`;
+    for(const rawFile of pendingChatPhotos){
+      const file = await compressImage(rawFile);
+      const fileName = `${currentDetailId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${file.name}`;
+      const { error } = await sb.storage.from('project-photos').upload(fileName, file);
+      if(error){
+        indicator.innerHTML = '';
+        alert('Ошибка загрузки фото: ' + error.message);
+        btn.disabled = false;
+        return;
+      }
+      const { data: pub } = sb.storage.from('project-photos').getPublicUrl(fileName);
+      photoUrls.push(pub.publicUrl);
+      done++;
+      indicator.innerHTML = `<div class="chat-uploading"><span class="spinner" style="border-top-color:var(--accent);"></span> Загрузка фото ${done}/${pendingChatPhotos.length}...</div>`;
+    }
+    indicator.innerHTML = '';
+    pendingChatPhotos = [];
+    drawPhotoStagePreview();
+  }
+
+  const { error: insertError } = await sb.from('project_messages').insert({
+    project_id: currentDetailId, user_id: ME.id, text: text || null,
+    photo_urls: photoUrls.length ? photoUrls : null,
+    reply_to: replyingTo
+  });
+  if(insertError){
+    alert('Ошибка отправки сообщения: ' + insertError.message);
+    btn.disabled = false;
+    return;
+  }
+  input.value = '';
+  cancelReply();
+  btn.disabled = false;
+}
+
+document.addEventListener('keypress', (e)=>{
+  if(e.target.id==='chatInput' && e.key==='Enter'){ sendMessage(); }
+});
+
+/* ---- лайтбокс просмотра фото ---- */
+let lightboxUrls = [];
+let lightboxIndex = 0;
+function openLightbox(msgId, index){
+  const m = currentMessages.find(x=>x.id===msgId);
+  lightboxUrls = (m.photo_urls || (m.photo_url?[m.photo_url]:[]));
+  lightboxIndex = index;
+  drawLightbox();
+  document.getElementById('lightbox').classList.add('active');
+}
+function drawLightbox(){
+  document.getElementById('lightboxImg').src = lightboxUrls[lightboxIndex];
+  document.getElementById('lightboxCounter').textContent = lightboxUrls.length>1 ? `${lightboxIndex+1} / ${lightboxUrls.length}` : '';
+}
+function lightboxNav(dir){
+  lightboxIndex = (lightboxIndex + dir + lightboxUrls.length) % lightboxUrls.length;
+  drawLightbox();
+}
+function closeLightbox(){ document.getElementById('lightbox').classList.remove('active'); }
+
+/* ==================================================================
+   ОТЧЁТЫ
+================================================================== */
+let pendingReportPhotos = [];
+
+async function renderDetailReports(){
+  const container = document.getElementById('detailContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div>`;
+
+  const { data: reports } = await sb.from('project_reports')
+    .select('*, app_users(full_name), project_stages(name)')
+    .eq('project_id', currentDetailId)
+    .order('created_at', {ascending:false});
+
+  let html = `<button class="btn btn-accent btn-block" onclick="openReportModal()" style="margin-bottom:14px;">+ Создать отчёт</button>`;
+
+  if(!reports || reports.length===0){
+    html += `<div class="empty"><div class="ic">📋</div>Пока нет отчётов по этому объекту.</div>`;
+  } else {
+    html += reports.map(r=>{
+      const time = new Date(r.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const photos = r.photos || [];
+      const canReview = ME.role === 'owner' || ME.role === 'foreman';
+      let statusTag = '';
+      if(r.status === 'accepted') statusTag = `<span class="report-status-tag accepted">✅ Принято</span>`;
+      else if(r.status === 'rework') statusTag = `<span class="report-status-tag rework">↩️ На доработку</span>`;
+      return `
+        <div class="report-card" data-id="${r.id}">
+          <div class="report-head">
+            <div class="report-ava">${initials(r.app_users?.full_name)}</div>
+            <div style="flex:1;">
+              <div class="report-author">${escapeHtml(r.app_users?.full_name || 'Сотрудник')}</div>
+              <div class="report-time">${time}</div>
+            </div>
+            ${canModify(r.user_id) ? `<button class="chat-icon-btn" style="width:32px; height:32px; font-size:18px;" onclick="openReportMenu('${r.id}')">⋮</button>` : ''}
+          </div>
+          ${r.project_stages ? `<div class="report-stage-tag">✓ Этап выполнен: ${escapeHtml(r.project_stages.name)}</div>` : ''}
+          ${statusTag}
+          ${r.comment ? `<div class="report-comment">${escapeHtml(r.comment)}${r.edited?' <span style="opacity:.6; font-size:11px;">(изменено)</span>':''}</div>` : ''}
+          ${photos.length ? `<div class="report-photos">${photos.slice(0,9).map((u,i)=>`<img src="${u}" onclick='openReportLightbox(${JSON.stringify(photos)},${i})'>`).join('')}</div>` : ''}
+          ${r.review_comment ? `<div class="report-comment" style="margin-top:8px; padding:8px 10px; background:var(--card2); border-radius:10px; font-size:13px;">💬 ${escapeHtml(r.review_comment)}</div>` : ''}
+          ${canReview ? `
+            <div class="report-actions-row">
+              <button class="btn btn-ghost btn-sm" onclick="reviewReport('${r.id}','accepted')">✅ Принято</button>
+              <button class="btn btn-ghost btn-sm" onclick="reviewReport('${r.id}','rework')">↩️ На доработку</button>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+  container.innerHTML = html;
+}
+
+function openReportMenu(reportId){
+  const choice = confirm('Нажмите ОК, чтобы изменить комментарий отчёта, или Отмена, чтобы увидеть вариант удаления.');
+  if(choice){
+    editReport(reportId);
+  } else {
+    if(confirm('Удалить этот отчёт целиком?')) deleteReport(reportId);
+  }
+}
+
+async function editReport(reportId){
+  const card = document.querySelector(`.report-card[data-id="${reportId}"] .report-comment`);
+  const current = card ? card.textContent.replace(' (изменено)','').trim() : '';
+  const newText = prompt('Изменить комментарий отчёта:', current);
+  if(newText===null) return;
+  await sb.from('project_reports').update({comment: newText.trim(), edited: true}).eq('id', reportId);
+  renderDetailReports();
+}
+
+async function deleteReport(reportId){
+  await sb.from('project_reports').delete().eq('id', reportId);
+  renderDetailReports();
+}
+
+async function reviewReport(reportId, status){
+  let reviewComment = null;
+  if(status === 'rework'){
+    reviewComment = prompt('Что нужно исправить? (необязательно)', '');
+    if(reviewComment===null) return;
+  }
+  await sb.from('project_reports').update({
+    status, review_comment: reviewComment ? reviewComment.trim() : null
+  }).eq('id', reportId);
+  logHistory(status === 'accepted' ? 'принял отчёт' : 'отправил отчёт на доработку');
+  renderDetailReports();
+}
+
+function openReportLightbox(urls, index){
+  lightboxUrls = urls; lightboxIndex = index;
+  drawLightbox();
+  document.getElementById('lightbox').classList.add('active');
+}
+
+async function openReportModal(){
+  document.getElementById('reportComment').value = '';
+  pendingReportPhotos = [];
+  drawReportPhotosGrid();
+
+  const { data: stages } = await sb.from('project_stages').select('*').eq('project_id', currentDetailId).eq('done', false);
+  const sel = document.getElementById('reportStage');
+  sel.innerHTML = '<option value="">— не отмечать —</option>' + (stages||[]).map(s=>`<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('');
+
+  openModal('modalReport');
+}
+
+document.getElementById('reportPhotoInput').addEventListener('change', (e)=>{
+  const files = Array.from(e.target.files || []);
+  pendingReportPhotos = pendingReportPhotos.concat(files).slice(0,20);
+  drawReportPhotosGrid();
+  e.target.value = '';
+});
+
+function drawReportPhotosGrid(){
+  const grid = document.getElementById('reportPhotosGrid');
+  let html = pendingReportPhotos.map((f,i)=>`
+    <div class="ph"><img src="${URL.createObjectURL(f)}"><button class="rm" onclick="removeReportPhoto(${i})">✕</button></div>
+  `).join('');
+  if(pendingReportPhotos.length < 20){
+    html += `<div class="photo-add-btn" onclick="document.getElementById('reportPhotoInput').click()">+</div>`;
+  }
+  grid.innerHTML = html;
+}
+function removeReportPhoto(i){ pendingReportPhotos.splice(i,1); drawReportPhotosGrid(); }
+
+async function saveReport(){
+  const comment = document.getElementById('reportComment').value.trim();
+  const stageId = document.getElementById('reportStage').value || null;
+  if(!comment && pendingReportPhotos.length===0){ alert('Добавьте комментарий или фото'); return; }
+
+  const btn = document.getElementById('saveReportBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Публикуем...';
+
+  let photoUrls = [];
+  for(const rawFile of pendingReportPhotos){
+    const file = await compressImage(rawFile);
+    const fileName = `${currentDetailId}/reports/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${file.name}`;
+    const { error } = await sb.storage.from('project-photos').upload(fileName, file);
+    if(error){
+      alert('Ошибка загрузки фото: ' + error.message);
+      btn.disabled = false;
+      btn.textContent = 'Опубликовать отчёт';
+      return;
+    }
+    const { data: pub } = sb.storage.from('project-photos').getPublicUrl(fileName);
+    photoUrls.push(pub.publicUrl);
+  }
+
+  const { error: reportError } = await sb.from('project_reports').insert({
+    project_id: currentDetailId, user_id: ME.id, comment: comment || null,
+    photos: photoUrls.length ? photoUrls : null, stage_id: stageId
+  });
+  if(reportError){
+    alert('Ошибка публикации отчёта: ' + reportError.message);
+    btn.disabled = false;
+    btn.textContent = 'Опубликовать отчёт';
+    return;
+  }
+
+  if(stageId){
+    await sb.from('project_stages').update({done:true}).eq('id', stageId);
+    await sb.from('projects').update({updated_at:new Date().toISOString()}).eq('id', currentDetailId);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Опубликовать отчёт';
+  closeModal('modalReport');
+  renderDetailReports();
+}
+
+/* ==================================================================
+   ДОКУМЕНТЫ
+================================================================== */
+function fileIcon(type){
+  if(!type) return '📄';
+  if(type.includes('pdf')) return '📕';
+  if(type.includes('sheet') || type.includes('excel') || type.includes('csv')) return '📗';
+  if(type.includes('word') || type.includes('document')) return '📘';
+  if(type.includes('zip') || type.includes('compressed')) return '🗜️';
+  if(type.includes('image')) return '🖼️';
+  return '📄';
+}
+function formatFileSize(bytes){
+  if(!bytes) return '';
+  if(bytes < 1024*1024) return Math.round(bytes/1024) + ' КБ';
+  return (bytes/1024/1024).toFixed(1) + ' МБ';
+}
+
+async function renderDetailDocs(){
+  const container = document.getElementById('detailContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div>`;
+
+  const canUpload = ME.role === 'owner' || ME.role === 'foreman';
+  const { data: docs } = await sb.from('project_documents').select('*, app_users(full_name)').eq('project_id', currentDetailId).order('created_at', {ascending:false});
+
+  let html = canUpload ? `<button class="btn btn-accent btn-block" onclick="openDocModal()" style="margin-bottom:14px;">+ Загрузить документ</button>` : '';
+
+  if(!docs || docs.length===0){
+    html += `<div class="empty"><div class="ic">📁</div>Пока нет документов.</div>`;
+  } else {
+    html += docs.map(d=>{
+      const date = new Date(d.created_at).toLocaleDateString('ru-RU');
+      return `
+        <div class="doc-row">
+          <div class="doc-icon">${fileIcon(d.file_type)}</div>
+          <div class="doc-info">
+            <div class="doc-name">${escapeHtml(d.file_name)}</div>
+            <div class="doc-meta">${escapeHtml(d.app_users?.full_name || '')} · ${date} · ${formatFileSize(d.file_size)}</div>
+          </div>
+          <a class="doc-dl" href="${d.file_url}" download="${escapeHtml(d.file_name)}" target="_blank">⬇</a>
+        </div>
+      `;
+    }).join('');
+  }
+  container.innerHTML = html;
+}
+
+function openDocModal(){
+  document.getElementById('docFileInput').value = '';
+  document.getElementById('docFileName').textContent = '';
+  openModal('modalDoc');
+}
+document.getElementById('docFileInput').addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  document.getElementById('docFileName').textContent = f ? `${f.name} (${formatFileSize(f.size)})` : '';
+});
+
+async function uploadDocument(){
+  const fileInput = document.getElementById('docFileInput');
+  const file = fileInput.files[0];
+  if(!file){ alert('Выберите файл'); return; }
+
+  const btn = document.getElementById('saveDocBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Загрузка...';
+
+  const fileName = `${currentDetailId}/docs/${Date.now()}_${file.name}`;
+  const { error } = await sb.storage.from('project-documents').upload(fileName, file);
+  if(error){
+    alert('Ошибка загрузки: ' + error.message);
+    btn.disabled = false; btn.textContent = 'Загрузить';
+    return;
+  }
+  const { data: pub } = sb.storage.from('project-documents').getPublicUrl(fileName);
+
+  await sb.from('project_documents').insert({
+    project_id: currentDetailId, user_id: ME.id, file_name: file.name,
+    file_url: pub.publicUrl, file_size: file.size, file_type: file.type
+  });
+
+  btn.disabled = false;
+  btn.textContent = 'Загрузить';
+  closeModal('modalDoc');
+  renderDetailDocs();
+}
+
+/* ==================================================================
+   ФИНАНСЫ
+================================================================== */
+/* ==================================================================
+   ИСТОРИЯ ИЗМЕНЕНИЙ
+================================================================== */
+async function logHistory(action){
+  try{
+    await sb.from('project_history').insert({
+      project_id: currentDetailId, user_id: ME.id, action
+    });
+  }catch(e){ /* если таблицы ещё нет — просто молча пропускаем, не мешаем основной работе */ }
+}
+
+async function renderDetailHistory(){
+  const container = document.getElementById('detailContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div>`;
+
+  const { data: events, error } = await sb.from('project_history').select('*, app_users(full_name)').eq('project_id', currentDetailId).order('created_at', {ascending:false}).limit(100);
+
+  if(error){
+    container.innerHTML = `<div class="empty"><div class="ic">📜</div>История пока недоступна.<br>Нужно один раз выполнить SQL-настройку (см. инструкцию).</div>`;
+    return;
+  }
+  if(!events || events.length===0){
+    container.innerHTML = `<div class="empty"><div class="ic">📜</div>Пока нет событий по объекту.</div>`;
+    return;
+  }
+  container.innerHTML = `<div class="card">` + events.map(e=>{
+    const time = new Date(e.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `
+      <div class="hist-item">
+        <div class="hist-dot"></div>
+        <div style="flex:1;">
+          <div class="hist-text"><b>${escapeHtml(e.app_users?.full_name || 'Сотрудник')}</b> ${escapeHtml(e.action)}</div>
+          <div class="hist-time">${time}</div>
+        </div>
+      </div>
+    `;
+  }).join('') + `</div>`;
+}
+
+/* ==================================================================
+   ЗАДАЧИ
+================================================================== */
+let currentTasks = [];
+let taskFilter = 'active';
+
+async function renderDetailTasks(){
+  const container = document.getElementById('detailContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div>`;
+  const canEdit = ME.role === 'owner' || ME.role === 'foreman';
+
+  const { data: tasks, error } = await sb.from('project_tasks').select('*, app_users(full_name)').eq('project_id', currentDetailId).order('due_date', {ascending:true, nullsFirst:false});
+
+  if(error){
+    container.innerHTML = `<div class="empty"><div class="ic">✅</div>Раздел задач пока недоступен.<br>Нужно один раз выполнить SQL-настройку (см. инструкцию).</div>`;
+    return;
+  }
+
+  currentTasks = tasks || [];
+  drawTasksList(canEdit);
+}
+
+function setTaskFilter(f){ taskFilter = f; drawTasksList(ME.role === 'owner' || ME.role === 'foreman'); }
+
+function drawTasksList(canEdit){
+  const container = document.getElementById('detailContent');
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  let list = currentTasks.slice();
+  if(taskFilter === 'active') list = list.filter(t=>!t.done);
+  else if(taskFilter === 'mine') list = list.filter(t=>!t.done && t.assignee_id === ME.id);
+  else if(taskFilter === 'overdue') list = list.filter(t=>!t.done && t.due_date && new Date(t.due_date) < today);
+  else if(taskFilter === 'done') list = list.filter(t=>t.done);
+
+  const filters = [
+    {key:'active', label:'Активные'},
+    {key:'mine', label:'Мои'},
+    {key:'overdue', label:'Просрочены'},
+    {key:'done', label:'Выполнены'}
+  ];
+
+  let html = `<div class="task-filter-row">${filters.map(f=>
+    `<div class="tab ${taskFilter===f.key?'active':''}" onclick="setTaskFilter('${f.key}')">${f.label}</div>`
+  ).join('')}</div>`;
+
+  if(canEdit){
+    html += `<button class="btn btn-accent btn-block" style="margin-bottom:14px;" onclick="openTaskModal()">+ Новая задача</button>`;
+  }
+
+  if(list.length===0){
+    html += `<div class="empty"><div class="ic">✅</div>Нет задач в этой категории.</div>`;
+  } else {
+    html += list.map(t=>{
+      const prioClass = t.priority === 'high' ? 'prio-high' : t.priority === 'low' ? 'prio-low' : 'prio-med';
+      const prioLabel = t.priority === 'high' ? '🔴 Срочно' : t.priority === 'low' ? '🔵 Обычный' : '🟡 Средний';
+      const isOverdue = !t.done && t.due_date && new Date(t.due_date) < today;
+      let dueChip = '';
+      if(t.due_date){
+        const dueClass = isOverdue ? 'due-over' : 'due-soon';
+        dueChip = `<span class="task-chip ${!t.done && isOverdue ? dueClass : ''}">📅 ${new Date(t.due_date).toLocaleDateString('ru-RU')}</span>`;
+      }
+      const canModifyTask = canEdit || t.assignee_id === ME.id;
+      return `
+        <div class="task-card ${prioClass} ${isOverdue?'overdue':''}">
+          <div class="task-top">
+            <div class="task-check ${t.done?'done':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</div>
+            <div class="task-name ${t.done?'done':''}" ${canModifyTask?`onclick="openTaskModal('${t.id}')" style="cursor:pointer;"`:''}>${escapeHtml(t.name)}</div>
+          </div>
+          <div class="task-meta-row">
+            <span class="task-chip">${prioLabel}</span>
+            ${dueChip}
+            ${t.app_users ? `<span class="task-chip">👷 ${escapeHtml(t.app_users.full_name)}</span>` : `<span class="task-chip">— не назначен —</span>`}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  container.innerHTML = html;
+}
+
+async function toggleTask(taskId){
+  const t = currentTasks.find(x=>x.id===taskId);
+  const newDone = !t.done;
+  await sb.from('project_tasks').update({done:newDone}).eq('id', taskId);
+  logHistory(newDone ? `выполнил задачу «${t.name}»` : `вернул задачу «${t.name}» в работу`);
+  t.done = newDone;
+  drawTasksList(ME.role === 'owner' || ME.role === 'foreman');
+}
+
+async function openTaskModal(id){
+  const isEdit = !!id;
+  document.getElementById('taskModalTitle').textContent = isEdit ? 'Редактировать задачу' : 'Новая задача';
+  document.getElementById('deleteTaskBtn').style.display = isEdit ? 'block' : 'none';
+
+  const { data: members } = await sb.from('project_members').select('*, app_users(*)').eq('project_id', currentDetailId);
+  const assigneeSel = document.getElementById('taskAssignee');
+  const owners = ALL_USERS.filter(u=>u.role==='owner');
+  const options = [...(members||[]).map(m=>m.app_users), ...owners];
+  const seen = new Set();
+  const uniqueOptions = options.filter(u=>{ if(!u || seen.has(u.id)) return false; seen.add(u.id); return true; });
+  assigneeSel.innerHTML = '<option value="">— не назначен —</option>' + uniqueOptions.map(u=>`<option value="${u.id}">${escapeHtml(u.full_name)}</option>`).join('');
+
+  if(isEdit){
+    const t = currentTasks.find(x=>x.id===id);
+    document.getElementById('taskId').value = t.id;
+    document.getElementById('taskName').value = t.name || '';
+    document.getElementById('taskAssignee').value = t.assignee_id || '';
+    document.getElementById('taskDue').value = t.due_date || '';
+    document.getElementById('taskPriority').value = t.priority || 'med';
+    document.getElementById('taskComment').value = t.comment || '';
+  } else {
+    document.getElementById('taskId').value = '';
+    ['taskName','taskDue','taskComment'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('taskAssignee').value = '';
+    document.getElementById('taskPriority').value = 'med';
+  }
+  openModal('modalTask');
+}
+
+async function saveTask(){
+  const name = document.getElementById('taskName').value.trim();
+  if(!name){ alert('Введите название задачи'); return; }
+  const id = document.getElementById('taskId').value;
+  const data = {
+    name,
+    assignee_id: document.getElementById('taskAssignee').value || null,
+    due_date: document.getElementById('taskDue').value || null,
+    priority: document.getElementById('taskPriority').value,
+    comment: document.getElementById('taskComment').value.trim()
+  };
+  if(id){
+    await sb.from('project_tasks').update(data).eq('id', id);
+    logHistory(`изменил задачу «${name}»`);
+  } else {
+    data.project_id = currentDetailId;
+    data.created_by = ME.id;
+    await sb.from('project_tasks').insert(data);
+    logHistory(`создал задачу «${name}»`);
+  }
+  closeModal('modalTask');
+  renderDetailTasks();
+}
+
+async function deleteTask(){
+  const id = document.getElementById('taskId').value;
+  if(!confirm('Удалить эту задачу?')) return;
+  await sb.from('project_tasks').delete().eq('id', id);
+  closeModal('modalTask');
+  renderDetailTasks();
+}
+
+/* ==================================================================
+   СМЕТА (ПОЗИЦИИ РАБОТ)
+================================================================== */
+let currentEstItems = [];
+
+async function renderDetailEstimate(){
+  const container = document.getElementById('detailContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div>`;
+  const canEdit = ME.role === 'owner' || ME.role === 'foreman';
+
+  const { data: items, error } = await sb.from('project_estimate_items').select('*').eq('project_id', currentDetailId).order('created_at');
+
+  if(error){
+    container.innerHTML = `<div class="empty"><div class="ic">🧮</div>Раздел смет пока недоступен.<br>Нужно один раз выполнить SQL-настройку (см. инструкцию).</div>`;
+    return;
+  }
+
+  currentEstItems = items || [];
+  const total = currentEstItems.reduce((sum,i)=> sum + (Number(i.qty)||0) * (Number(i.price)||0), 0);
+
+  let html = `
+    <div class="est-total-card">
+      <div class="lbl">Итого по смете</div>
+      <div class="val">${total.toLocaleString('ru-RU')} ₽</div>
+    </div>
+  `;
+
+  if(canEdit){
+    html += `
+      <div style="display:flex; gap:8px; margin-bottom:14px;">
+        <button class="btn btn-accent" style="flex:1;" onclick="openEstItemModal()">+ Позиция</button>
+        <button class="btn btn-ghost" style="flex:1;" onclick="openTemplatesModal()">📋 Шаблоны</button>
+      </div>
+    `;
+  }
+
+  if(currentEstItems.length===0){
+    html += `<div class="empty"><div class="ic">🧮</div>Пока нет позиций сметы.${canEdit ? '<br>Нажмите «+ Позиция», чтобы добавить первую.' : ''}</div>`;
+  } else {
+    html += `<div class="card" style="padding:8px 10px;"><table class="est-table"><thead><tr>
+      <th>Наименование</th><th class="est-num">Кол-во</th><th class="est-num">Сумма</th>${canEdit?'<th></th>':''}
+    </tr></thead><tbody>`;
+    html += currentEstItems.map(i=>{
+      const sum = (Number(i.qty)||0) * (Number(i.price)||0);
+      return `
+        <tr onclick="${canEdit ? `openEstItemModal('${i.id}')` : ''}">
+          <td>
+            <div class="est-row-name">${escapeHtml(i.name)}</div>
+            <div class="est-row-sub">${Number(i.price)||0} ₽ × ${i.qty} ${escapeHtml(i.unit||'')}</div>
+          </td>
+          <td class="est-num">${i.qty} ${escapeHtml(i.unit||'')}</td>
+          <td class="est-num" style="font-weight:700;">${sum.toLocaleString('ru-RU')} ₽</td>
+          ${canEdit ? `<td><button class="est-del" onclick="event.stopPropagation(); quickDeleteEstItem('${i.id}')">🗑️</button></td>` : ''}
+        </tr>
+      `;
+    }).join('');
+    html += `</tbody></table></div>`;
+
+    if(canEdit){
+      html += `<button class="btn btn-ghost btn-block" style="margin-top:4px;" onclick="openSaveTplModal()">💾 Сохранить как шаблон</button>`;
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function calcEstItemLive(){
+  const qty = Number(document.getElementById('estItemQty').value) || 0;
+  const price = Number(document.getElementById('estItemPrice').value) || 0;
+  document.getElementById('estItemSumPreview').textContent = (qty*price).toLocaleString('ru-RU') + ' ₽';
+}
+
+function openEstItemModal(id){
+  const isEdit = !!id;
+  document.getElementById('estItemModalTitle').textContent = isEdit ? 'Редактировать позицию' : 'Новая позиция';
+  document.getElementById('deleteEstItemBtn').style.display = isEdit ? 'block' : 'none';
+  if(isEdit){
+    const i = currentEstItems.find(x=>x.id===id);
+    document.getElementById('estItemId').value = i.id;
+    document.getElementById('estItemName').value = i.name || '';
+    document.getElementById('estItemUnit').value = i.unit || '';
+    document.getElementById('estItemQty').value = i.qty || '';
+    document.getElementById('estItemPrice').value = i.price || '';
+  } else {
+    document.getElementById('estItemId').value = '';
+    ['estItemName','estItemUnit','estItemQty','estItemPrice'].forEach(f=>document.getElementById(f).value='');
+  }
+  calcEstItemLive();
+  openModal('modalEstItem');
+}
+
+async function saveEstItem(){
+  const name = document.getElementById('estItemName').value.trim();
+  if(!name){ alert('Введите наименование работ'); return; }
+  const id = document.getElementById('estItemId').value;
+  const data = {
+    name,
+    unit: document.getElementById('estItemUnit').value.trim(),
+    qty: Number(document.getElementById('estItemQty').value) || 0,
+    price: Number(document.getElementById('estItemPrice').value) || 0
+  };
+  if(id){
+    await sb.from('project_estimate_items').update(data).eq('id', id);
+    logHistory(`изменил позицию сметы «${name}»`);
+  } else {
+    data.project_id = currentDetailId;
+    await sb.from('project_estimate_items').insert(data);
+    logHistory(`добавил позицию сметы «${name}»`);
+  }
+  closeModal('modalEstItem');
+  renderDetailEstimate();
+}
+
+async function deleteEstItem(){
+  const id = document.getElementById('estItemId').value;
+  if(!confirm('Удалить позицию сметы?')) return;
+  await sb.from('project_estimate_items').delete().eq('id', id);
+  closeModal('modalEstItem');
+  renderDetailEstimate();
+}
+
+async function quickDeleteEstItem(id){
+  if(!confirm('Удалить позицию сметы?')) return;
+  await sb.from('project_estimate_items').delete().eq('id', id);
+  renderDetailEstimate();
+}
+
+/* ---- шаблоны смет ---- */
+function openSaveTplModal(){
+  document.getElementById('tplName').value = '';
+  openModal('modalSaveTpl');
+}
+
+async function saveAsTemplate(){
+  const name = document.getElementById('tplName').value.trim();
+  if(!name){ alert('Введите название шаблона'); return; }
+  if(currentEstItems.length===0){ alert('В смете пока нет позиций для сохранения'); return; }
+
+  const items = currentEstItems.map(i=>({name:i.name, unit:i.unit, qty:i.qty, price:i.price}));
+  const { error } = await sb.from('estimate_templates').insert({
+    name, items, created_by: ME.id
+  });
+  if(error){
+    alert('Не удалось сохранить шаблон: ' + error.message);
+    return;
+  }
+  closeModal('modalSaveTpl');
+  alert('Шаблон сохранён!');
+}
+
+async function openTemplatesModal(){
+  const { data: templates, error } = await sb.from('estimate_templates').select('*').order('created_at', {ascending:false});
+  const list = document.getElementById('templatesList');
+  if(error){
+    list.innerHTML = `<div class="empty">Шаблоны пока недоступны.<br>Нужна SQL-настройка (см. инструкцию).</div>`;
+    openModal('modalTemplates');
+    return;
+  }
+  if(!templates || templates.length===0){
+    list.innerHTML = `<div class="empty"><div class="ic">📋</div>Пока нет сохранённых шаблонов.<br>Соберите смету и нажмите «Сохранить как шаблон».</div>`;
+  } else {
+    list.innerHTML = templates.map(t=>`
+      <div class="tpl-row" onclick="applyTemplate('${t.id}')">
+        <div>
+          <div class="tpl-name">${escapeHtml(t.name)}</div>
+          <div class="tpl-meta">${(t.items||[]).length} позиций</div>
+        </div>
+        <button class="est-del" onclick="event.stopPropagation(); deleteTemplate('${t.id}')">🗑️</button>
+      </div>
+    `).join('');
+  }
+  openModal('modalTemplates');
+}
+
+async function applyTemplate(tplId){
+  const { data: tpl } = await sb.from('estimate_templates').select('*').eq('id', tplId).maybeSingle();
+  if(!tpl){ alert('Шаблон не найден'); return; }
+  if(!confirm(`Добавить ${((tpl.items)||[]).length} позиций из шаблона «${tpl.name}» в смету этого объекта?`)) return;
+
+  const rows = (tpl.items||[]).map(i=>({
+    project_id: currentDetailId, name: i.name, unit: i.unit, qty: i.qty, price: i.price
+  }));
+  if(rows.length){
+    await sb.from('project_estimate_items').insert(rows);
+    logHistory(`применил шаблон сметы «${tpl.name}»`);
+  }
+  closeModal('modalTemplates');
+  renderDetailEstimate();
+}
+
+async function deleteTemplate(tplId){
+  if(!confirm('Удалить этот шаблон?')) return;
+  await sb.from('estimate_templates').delete().eq('id', tplId);
+  openTemplatesModal();
+}
+
+async function renderDetailFinance(){
+  const container = document.getElementById('detailContent');
+  const p = ALL_PROJECTS.find(x=>x.id===currentDetailId);
+  const canEdit = ME.role === 'owner' || ME.role === 'foreman';
+
+  const budget = Number(p.budget) || 0;
+  const spent = Number(p.spent) || 0;
+  const remain = budget - spent;
+  const pct = budget > 0 ? Math.min(100, Math.round(spent/budget*100)) : 0;
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="fin-big">
+        <div class="amount" style="color:var(--accent2)">${budget.toLocaleString('ru-RU')} ₽</div>
+        <div class="label">Общий бюджет объекта</div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%; background:${pct>90?'var(--red)':'linear-gradient(90deg,var(--accent),var(--accent2))'}"></div></div>
+        <div class="progress-label"><span>Освоено бюджета</span><span>${pct}%</span></div>
+      </div>
+      <div class="fin-grid" style="margin-top:16px;">
+        <div class="fin-stat"><div class="v" style="color:var(--red)">${spent.toLocaleString('ru-RU')} ₽</div><div class="l">Потрачено</div></div>
+        <div class="fin-stat"><div class="v" style="color:var(--green)">${remain.toLocaleString('ru-RU')} ₽</div><div class="l">Остаток</div></div>
+      </div>
+    </div>
+    ${canEdit ? `
+    <div class="detail-section">
+      <h3>Обновить расход</h3>
+      <div class="card">
+        <label>Потрачено всего, ₽</label>
+        <input type="number" id="finSpentInput" value="${spent}" placeholder="0">
+        <button class="btn btn-accent btn-block" style="margin-top:12px;" onclick="saveFinance()">Сохранить</button>
+      </div>
+    </div>` : ''}
+  `;
+}
+
+async function saveFinance(){
+  const spent = Number(document.getElementById('finSpentInput').value) || 0;
+  await sb.from('projects').update({spent, updated_at:new Date().toISOString()}).eq('id', currentDetailId);
+  logHistory(`обновил сумму расходов: ${spent.toLocaleString('ru-RU')} ₽`);
+  await loadAllData();
+  renderDetailFinance();
+}
+
+/* ==================================================================
+   МОДАЛКА ОБЪЕКТА
+================================================================== */
+function openProjectModal(id){
+  const isEdit = !!id;
+  document.getElementById('projModalTitle').textContent = isEdit ? 'Редактировать объект' : 'Новый объект';
+  document.getElementById('deleteProjBtn').style.display = (isEdit && ME.role==='owner') ? 'block' : 'none';
+
+  if(isEdit){
+    const p = ALL_PROJECTS.find(x=>x.id===id);
+    document.getElementById('projId').value = p.id;
+    document.getElementById('projName').value = p.name || '';
+    document.getElementById('projAddress').value = p.address || '';
+    document.getElementById('projClientName').value = p.client_name || '';
+    document.getElementById('projClientPhone').value = p.client_phone || '';
+    document.getElementById('projBudget').value = p.budget || '';
+    document.getElementById('projStatus').value = p.status || 'active';
+    document.getElementById('projStart').value = p.start_date || '';
+    document.getElementById('projEnd').value = p.end_date || '';
+    document.getElementById('projNotes').value = p.notes || '';
+  } else {
+    document.getElementById('projId').value = '';
+    ['projName','projAddress','projClientName','projClientPhone','projBudget','projStart','projEnd','projNotes'].forEach(f=>document.getElementById(f).value='');
+    document.getElementById('projStatus').value = 'active';
+  }
+  openModal('modalProject');
+}
+
+async function saveProject(){
+  const name = document.getElementById('projName').value.trim();
+  if(!name){ alert('Введите название объекта'); return; }
+  const id = document.getElementById('projId').value;
+  const btn = document.getElementById('saveProjBtn');
+  btn.disabled = true;
+
+  const data = {
+    name,
+    address: document.getElementById('projAddress').value.trim(),
+    client_name: document.getElementById('projClientName').value.trim(),
+    client_phone: document.getElementById('projClientPhone').value.trim(),
+    budget: document.getElementById('projBudget').value || null,
+    status: document.getElementById('projStatus').value,
+    start_date: document.getElementById('projStart').value || null,
+    end_date: document.getElementById('projEnd').value || null,
+    notes: document.getElementById('projNotes').value.trim(),
+    updated_at: new Date().toISOString()
+  };
+
+  if(id){
+    await sb.from('projects').update(data).eq('id', id);
+  } else {
+    data.created_by = ME.id;
+    const { data: inserted } = await sb.from('projects').insert(data).select().single();
+    if(inserted && ME.role !== 'owner'){
+      await sb.from('project_members').insert({project_id: inserted.id, user_id: ME.id});
+    }
+  }
+  btn.disabled = false;
+  closeModal('modalProject');
+  await loadAllData();
+  render();
+  if(currentDetailId===id) renderDetailInfo();
+}
+
+async function deleteProject(){
+  const id = document.getElementById('projId').value;
+  if(!confirm('Удалить объект? Это действие нельзя отменить.')) return;
+  await sb.from('projects').delete().eq('id', id);
+  closeModal('modalProject');
+  await loadAllData();
+  goTo('projects');
+}
+
+/* ==================================================================
+   МОДАЛКА СОТРУДНИКА
+================================================================== */
+function openEmployeeModal(id){
+  const isEdit = !!id;
+  document.getElementById('empModalTitle').textContent = isEdit ? 'Редактировать сотрудника' : 'Новый сотрудник';
+  document.getElementById('deleteEmpBtn').style.display = isEdit ? 'block' : 'none';
+
+  if(isEdit){
+    const u = ALL_USERS.find(x=>x.id===id);
+    document.getElementById('empId').value = u.id;
+    document.getElementById('empName').value = u.full_name || '';
+    document.getElementById('empPhone').value = u.phone || '';
+    document.getElementById('empRole').value = u.role || 'worker';
+    document.getElementById('empLogin').value = u.login || '';
+    document.getElementById('empPass').value = u.password || '';
+  } else {
+    document.getElementById('empId').value = '';
+    document.getElementById('empName').value = '';
+    document.getElementById('empPhone').value = '';
+    document.getElementById('empRole').value = 'worker';
+    document.getElementById('empLogin').value = genLogin('worker');
+    document.getElementById('empPass').value = genPassword();
+  }
+  openModal('modalEmployee');
+}
+
+document.getElementById('empRole') && document.getElementById('empRole').addEventListener('change', (e)=>{
+  if(!document.getElementById('empId').value){
+    document.getElementById('empLogin').value = genLogin(e.target.value);
+  }
+});
+
+async function saveEmployee(){
+  const name = document.getElementById('empName').value.trim();
+  const login = document.getElementById('empLogin').value.trim().toUpperCase();
+  const pass = document.getElementById('empPass').value.trim();
+  if(!name || !login || !pass){ alert('Заполните имя, код и пароль'); return; }
+  const id = document.getElementById('empId').value;
+
+  const data = {
+    full_name: name,
+    phone: document.getElementById('empPhone').value.trim(),
+    role: document.getElementById('empRole').value,
+    login, password: pass
+  };
+
+  const { error } = id
+    ? await sb.from('app_users').update(data).eq('id', id)
+    : await sb.from('app_users').insert(data);
+
+  if(error){
+    alert('Ошибка: возможно такой код сотрудника уже занят. ' + error.message);
+    return;
+  }
+
+  closeModal('modalEmployee');
+  await loadAllData();
+  renderTeam();
+}
+
+async function deleteEmployee(){
+  const id = document.getElementById('empId').value;
+  if(!confirm('Удалить сотрудника? Он потеряет доступ к системе.')) return;
+  await sb.from('app_users').delete().eq('id', id);
+  closeModal('modalEmployee');
+  await loadAllData();
+  renderTeam();
+}
+
+/* ==================================================================
+   КАЛЕНДАРЬ РАБОЧИХ ДНЕЙ
+================================================================== */
+let calViewDate = new Date();
+const WEEKDAY_LABELS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+const MONTH_LABELS = ['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+
+function ymd(date){
+  return date.getFullYear() + '-' + String(date.getMonth()+1).padStart(2,'0') + '-' + String(date.getDate()).padStart(2,'0');
+}
+
+async function renderCalendar(){
+  const container = document.getElementById('calendarContent');
+  container.innerHTML = `<div class="empty"><span class="spinner" style="border-top-color:var(--accent); width:20px; height:20px;"></span></div>`;
+
+  if(ME.role === 'owner'){
+    await renderTeamCalendar(container);
+  } else {
+    await renderMyCalendar(container);
+  }
+}
+
+/* ---- личный календарь (сотрудник / прораб) ---- */
+async function renderMyCalendar(container){
+  const year = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+
+  const monthStart = ymd(new Date(year, month, 1));
+  const monthEnd = ymd(new Date(year, month+1, 0));
+
+  const { data: schedule } = await sb.from('work_schedule').select('work_date').eq('user_id', ME.id).gte('work_date', monthStart).lte('work_date', monthEnd);
+  const workingDays = new Set((schedule||[]).map(s=>s.work_date));
+
+  container.innerHTML = `
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+      <h2>${MONTH_LABELS[month]} ${year}</h2>
+      <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+    </div>
+    <div class="cal-weekdays">${WEEKDAY_LABELS.map(d=>`<div>${d}</div>`).join('')}</div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:rgba(61,220,132,.35);"></div>Рабочий день</div>
+      <div class="cal-legend-item"><div class="cal-legend-dot" style="background:var(--card2);"></div>Выходной</div>
+    </div>
+    <p style="font-size:12.5px; color:var(--muted); margin-top:16px; text-align:center;">Нажмите на дату, чтобы отметить рабочий/выходной день</p>
+  `;
+  drawCalGrid(year, month, workingDays, true);
+}
+
+function drawCalGrid(year, month, workingDays, editable){
+  const grid = document.getElementById('calGrid');
+  const firstDay = new Date(year, month, 1);
+  let startOffset = firstDay.getDay() - 1;
+  if(startOffset < 0) startOffset = 6;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const todayStr = ymd(new Date());
+
+  let html = '';
+  for(let i=0;i<startOffset;i++) html += `<div class="cal-day empty"></div>`;
+  for(let d=1; d<=daysInMonth; d++){
+    const dateStr = ymd(new Date(year, month, d));
+    const isWorking = workingDays.has(dateStr);
+    const isToday = dateStr === todayStr;
+    html += `<div class="cal-day ${isWorking?'working':'off'} ${isToday?'today':''}" ${editable?`onclick="toggleWorkDay('${dateStr}')"`:''}>
+      ${d}${isWorking?'<div class="dot"></div>':''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function calNav(dir){
+  calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth()+dir, 1);
+  renderCalendar();
+}
+
+async function toggleWorkDay(dateStr){
+  const { data: existing } = await sb.from('work_schedule').select('id').eq('user_id', ME.id).eq('work_date', dateStr).maybeSingle();
+  if(existing){
+    await sb.from('work_schedule').delete().eq('id', existing.id);
+  } else {
+    await sb.from('work_schedule').insert({user_id: ME.id, work_date: dateStr, status:'working'});
+  }
+  renderCalendar();
+}
+
+/* ---- календарь руководителя: сводка по всей команде ---- */
+async function renderTeamCalendar(container){
+  const year = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+  const monthStart = ymd(new Date(year, month, 1));
+  const monthEnd = ymd(new Date(year, month+1, 0));
+  const todayStr = ymd(new Date());
+
+  const employees = ALL_USERS.filter(u=>u.id !== ME.id);
+  const { data: schedule } = await sb.from('work_schedule').select('*').gte('work_date', monthStart).lte('work_date', monthEnd);
+
+  const byUser = {};
+  (schedule||[]).forEach(s=>{
+    if(!byUser[s.user_id]) byUser[s.user_id] = new Set();
+    byUser[s.user_id].add(s.work_date);
+  });
+
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const workingToday = (schedule||[]).filter(s=>s.work_date === todayStr).length;
+
+  let html = `
+    <div class="cal-header">
+      <button class="cal-nav-btn" onclick="calNav(-1)">‹</button>
+      <h2>${MONTH_LABELS[month]} ${year}</h2>
+      <button class="cal-nav-btn" onclick="calNav(1)">›</button>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><div class="num" style="color:var(--green)">${workingToday}</div><div class="lbl">Работают сегодня</div></div>
+      <div class="stat"><div class="num">${employees.length}</div><div class="lbl">Всего сотрудников</div></div>
+    </div>
+  `;
+
+  if(employees.length === 0){
+    html += `<div class="empty"><div class="ic">👷</div>Пока нет сотрудников в компании.</div>`;
+  } else {
+    html += employees.map(u=>{
+      const daysSet = byUser[u.id] || new Set();
+      let strip = '';
+      const todayDay = new Date().getDate();
+      const isCurrentMonth = year===new Date().getFullYear() && month===new Date().getMonth();
+      for(let d=1; d<=daysInMonth; d++){
+        const dateStr = ymd(new Date(year, month, d));
+        const working = daysSet.has(dateStr);
+        const isToday = isCurrentMonth && d===todayDay;
+        strip += `<div class="cts ${working?'working':''} ${isToday?'today-mark':''}"></div>`;
+      }
+      return `
+        <div class="cal-team-row">
+          <div class="cal-team-name">
+            <span class="user-avatar" style="width:24px;height:24px;font-size:10px;">${initials(u.full_name)}</span>
+            ${escapeHtml(u.full_name)}
+            <span style="margin-left:auto; font-size:11.5px; color:var(--muted); font-weight:600;">${daysSet.size} дн.</span>
+          </div>
+          <div class="cal-team-strip">${strip}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  container.innerHTML = html;
+}
+
+
+/* ==================================================================
+   ПРОФИЛЬ
+================================================================== */
+function renderProfile(){
+  const container = document.getElementById('profileContent');
+  const savedTheme = localStorage.getItem('stroycrm_theme') || 'dark';
+  container.innerHTML = `
+    <div class="card" style="text-align:center; padding:26px 16px;">
+      <div class="user-avatar" style="width:64px; height:64px; font-size:22px; margin:0 auto 12px;">${initials(ME.full_name)}</div>
+      <div style="font-size:18px; font-weight:700;">${escapeHtml(ME.full_name)}</div>
+      <div style="font-size:13px; color:var(--muted); margin-top:4px;">${ROLE_LABELS[ME.role]||ME.role}</div>
+    </div>
+    <div class="detail-section">
+      <h3>Данные аккаунта</h3>
+      <div class="card">
+        <div class="info-line"><span class="k">Код сотрудника</span><span class="v">${escapeHtml(ME.login)}</span></div>
+        <div class="info-line"><span class="k">Телефон</span><span class="v">${ME.phone ? escapeHtml(ME.phone) : '—'}</span></div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h3>Оформление</h3>
+      <div class="chip-select">
+        <div class="chip ${savedTheme==='dark'?'sel':''}" onclick="setTheme('dark')">🌙 Тёмная</div>
+        <div class="chip ${savedTheme==='light'?'sel':''}" onclick="setTheme('light')">☀️ Светлая</div>
+        <div class="chip ${savedTheme==='auto'?'sel':''}" onclick="setTheme('auto')">⚙️ Авто</div>
+      </div>
+    </div>
+    <div class="detail-section">
+      <h3>Подписка</h3>
+      <div class="card">
+        ${ME.role === 'owner' ? `
+          <div class="info-line"><span class="k">Тариф</span><span class="v" style="color:var(--accent2); font-weight:700;">VIP Lifetime</span></div>
+          <div class="info-line"><span class="k">Стоимость</span><span class="v">100$</span></div>
+          <div class="info-line"><span class="k">Статус</span><span class="v" style="color:var(--green);">Активен</span></div>
+          <div class="info-line"><span class="k">Срок действия</span><span class="v">Бессрочно</span></div>
+        ` : `
+          <div class="info-line"><span class="k">Тариф</span><span class="v">Стандарт</span></div>
+          <div class="info-line"><span class="k">Статус</span><span class="v" style="color:var(--green);">Активен</span></div>
+          <div style="font-size:12.5px; color:var(--muted); margin-top:8px;">Подписка управляется руководителем компании.</div>
+        `}
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-block" onclick="openEmployeeModal('${ME.id}')">✏️ Изменить мои данные</button>
+    <button class="btn btn-ghost btn-block" style="margin-top:10px; color:var(--red);" onclick="logout()">Выйти из аккаунта</button>
+  `;
+}
+
+function setTheme(theme){
+  localStorage.setItem('stroycrm_theme', theme);
+  applyTheme();
+  renderProfile();
+}
+function applyTheme(){
+  const theme = localStorage.getItem('stroycrm_theme') || 'dark';
+  let effective = theme;
+  if(theme === 'auto'){
+    effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+  }
+  document.body.classList.toggle('theme-light', effective === 'light');
+}
+
+/* ==================================================================
+   УТИЛИТЫ
+================================================================== */
+function openModal(id){ document.getElementById(id).classList.add('active'); }
+function closeModal(id){ document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.overlay').forEach(ov=>{
+  ov.addEventListener('click', e=>{ if(e.target===ov) ov.classList.remove('active'); });
+});
+
+function renderQuickGrid(){
+  const grid = document.getElementById('quickGrid');
+  if(!grid) return;
+  const tiles = [];
+  tiles.push({ic:'📋', lbl:'Шаблоны смет', fn:'openGlobalTemplates()'});
+  tiles.push({ic:'📞', lbl:'Звонок клиенту', fn:'quickCallClient()'});
+  if(ME.role === 'owner'){
+    tiles.push({ic:'👷', lbl:'Сотрудники', fn:"goTo('team')"});
+  } else {
+    tiles.push({ic:'🧮', lbl:'Мои сметы', fn:'quickOpenMyEstimates()'});
+  }
+  tiles.push({ic:'👤', lbl:'Профиль', fn:"goTo('profile')"});
+
+  grid.innerHTML = tiles.map(t=>`
+    <div class="quick-tile" onclick="${t.fn}">
+      <div class="qt-ic">${t.ic}</div>
+      <div class="qt-lbl">${t.lbl}</div>
+    </div>
+  `).join('');
+}
+
+function openGlobalTemplates(){
+  if(visibleProjects().length===0){ alert('Сначала создайте хотя бы один объект — шаблоны применяются внутри объекта, во вкладке «Смета».'); return; }
+  alert('Откройте любой объект → вкладку «Смета» → кнопку «📋 Шаблоны», чтобы посмотреть и применить сохранённые шаблоны.');
+}
+
+function quickCallClient(){
+  const withPhone = visibleProjects().filter(p=>p.client_phone);
+  if(withPhone.length===0){ alert('Ни у одного объекта пока не указан телефон заказчика.'); return; }
+  if(withPhone.length===1){ window.location.href = 'tel:'+withPhone[0].client_phone; return; }
+  const list = withPhone.map((p,i)=>`${i+1}. ${p.name} — ${p.client_phone}`).join('\n');
+  const choice = prompt('Выберите номер объекта для звонка:\n'+list);
+  const idx = Number(choice)-1;
+  if(withPhone[idx]) window.location.href = 'tel:'+withPhone[idx].client_phone;
+}
+
+function quickOpenMyEstimates(){
+  if(visibleProjects().length===0){ alert('У вас пока нет доступных объектов.'); return; }
+  if(visibleProjects().length===1){ openDetail(visibleProjects()[0].id); setDetailTab('estimate'); return; }
+  goTo('projects');
+}
+
+/* ==================================================================
+   ДАШБОРД РУКОВОДИТЕЛЯ
+================================================================== */
+async function renderDashboard(){
+  const wrap = document.getElementById('dashWrap');
+  if(!wrap) return;
+  if(ME.role !== 'owner'){ wrap.innerHTML = ''; return; }
+
+  wrap.innerHTML = `<div class="dash-wrap"><div class="empty" style="padding:16px;"><span class="spinner" style="border-top-color:var(--accent); width:18px; height:18px;"></span></div></div>`;
+
+  const projectIds = ALL_PROJECTS.map(p=>p.id);
+  if(projectIds.length===0){ wrap.innerHTML=''; return; }
+
+  const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+  const todayIso = todayStart.toISOString();
+
+  const [tasksRes, reportsRes, membersRes, historyRes] = await Promise.all([
+    sb.from('project_tasks').select('id, project_id, due_date, done').in('project_id', projectIds),
+    sb.from('project_reports').select('id, created_at').in('project_id', projectIds).gte('created_at', todayIso),
+    sb.from('project_members').select('user_id').in('project_id', projectIds),
+    sb.from('project_history').select('*, app_users(full_name)').in('project_id', projectIds).neq('user_id', ME.id).order('created_at', {ascending:false}).limit(8)
+  ]);
+
+  const tasks = tasksRes.data || [];
+  const overdueTasks = tasks.filter(t=>!t.done && t.due_date && new Date(t.due_date) < todayStart);
+  const newReportsToday = (reportsRes.data || []).length;
+  const uniqueWorkers = new Set((membersRes.data || []).map(m=>m.user_id)).size;
+  const history = historyRes.data || [];
+
+  let html = `<div class="dash-wrap">
+    <div class="dash-head"><h2>📊 Обзор компании</h2></div>
+    <div class="dash-grid">
+      <div class="dash-card"><div class="dc-num">${uniqueWorkers}</div><div class="dc-lbl">👷 Людей на объектах</div></div>
+      <div class="dash-card ${overdueTasks.length>0?'alert':''}"><div class="dc-num">${overdueTasks.length}</div><div class="dc-lbl">🚨 Просроченные задачи</div></div>
+      <div class="dash-card"><div class="dc-num">${newReportsToday}</div><div class="dc-lbl">📷 Отчётов сегодня</div></div>
+      <div class="dash-card"><div class="dc-num">${projectIds.length}</div><div class="dc-lbl">🏗 Всего объектов</div></div>
+    </div>`;
+
+  if(history.length > 0){
+    html += `<div style="font-size:12.5px; color:var(--muted); font-weight:600; margin:16px 0 8px; text-transform:uppercase; letter-spacing:.3px;">Активность команды</div>`;
+    html += `<div class="dash-feed">` + history.map(h=>{
+      const proj = ALL_PROJECTS.find(p=>p.id===h.project_id);
+      const time = new Date(h.created_at).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return `
+        <div class="dash-feed-item">
+          <div class="dash-feed-ic">•</div>
+          <div class="dash-feed-text">
+            <b>${escapeHtml(h.app_users?.full_name || 'Сотрудник')}</b> ${escapeHtml(h.action)}
+            ${proj ? ` — <span class="dash-feed-proj" onclick="openDetail('${proj.id}')">${escapeHtml(proj.name)}</span>` : ''}
+            <div class="dash-feed-time">${time}</div>
+          </div>
+        </div>
+      `;
+    }).join('') + `</div>`;
+  }
+
+  html += `</div>`;
+  wrap.innerHTML = html;
+}
+
+function render(){
+  renderDashboard();
+  renderStats();
+  renderQuickGrid();
+  renderTabs();
+  renderProjects();
+}
+
+/* ==================================================================
+   ИИ-ПОМОЩНИК
+================================================================== */
+let aiChatHistory = [];
+
+async function openAiAssistant(){
+  openModal('modalAi');
+  const body = document.getElementById('aiChatBody');
+
+  if(aiChatHistory.length === 0){
+    body.innerHTML = `
+      <div class="ai-msg bot">Привет! Я помогу разобраться с этим объектом — могу сделать сводку по прогрессу, посчитать смету или ответить на вопрос по задачам и отчётам. Что интересует?</div>
+      <div class="ai-suggest-row">
+        <div class="ai-suggest-chip" onclick="askAiPreset('Сделай сводку по объекту за сегодня')">📊 Сводка за сегодня</div>
+        <div class="ai-suggest-chip" onclick="askAiPreset('Какие задачи просрочены?')">🚨 Что просрочено?</div>
+        <div class="ai-suggest-chip" onclick="askAiPreset('Сколько потрачено по смете и сколько осталось?')">💰 Остаток бюджета</div>
+      </div>
+    `;
+  } else {
+    renderAiMessages();
+  }
+}
+
+function renderAiMessages(){
+  const body = document.getElementById('aiChatBody');
+  body.innerHTML = aiChatHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'bot'}">${escapeHtml(m.content)}</div>`).join('');
+  body.scrollTop = body.scrollHeight;
+}
+
+function askAiPreset(text){
+  document.getElementById('aiInput').value = text;
+  sendAiMessage();
+}
+
+async function buildProjectContext(){
+  const p = ALL_PROJECTS.find(x=>x.id===currentDetailId);
+  const [stagesRes, tasksRes, reportsRes, estimateRes] = await Promise.all([
+    sb.from('project_stages').select('name, done, due_date').eq('project_id', currentDetailId),
+    sb.from('project_tasks').select('name, done, due_date, priority, app_users(full_name)').eq('project_id', currentDetailId),
+    sb.from('project_reports').select('comment, created_at, app_users(full_name)').eq('project_id', currentDetailId).order('created_at', {ascending:false}).limit(15),
+    sb.from('project_estimate_items').select('name, unit, qty, price').eq('project_id', currentDetailId)
+  ]);
+
+  const stages = stagesRes.data || [];
+  const tasks = tasksRes.data || [];
+  const reports = reportsRes.data || [];
+  const items = estimateRes.data || [];
+  const estimateTotal = items.reduce((s,i)=> s + (Number(i.qty)||0)*(Number(i.price)||0), 0);
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdueTasks = tasks.filter(t=>!t.done && t.due_date && new Date(t.due_date) < today);
+
+  let ctx = `Объект: ${p.name} (${p.address||'адрес не указан'}). Статус: ${p.status}.\n`;
+  ctx += `Бюджет: ${p.budget ? Number(p.budget).toLocaleString('ru-RU')+' ₽' : 'не указан'}. Потрачено: ${p.spent ? Number(p.spent).toLocaleString('ru-RU')+' ₽' : '0 ₽'}.\n\n`;
+
+  ctx += `ЭТАПЫ (${stages.filter(s=>s.done).length}/${stages.length} выполнено):\n`;
+  ctx += stages.map(s=>`- ${s.done?'[✓]':'[ ]'} ${s.name}${s.due_date?' (срок: '+s.due_date+')':''}`).join('\n') || 'нет этапов';
+  ctx += `\n\nЗАДАЧИ (${tasks.filter(t=>t.done).length}/${tasks.length} выполнено, просрочено: ${overdueTasks.length}):\n`;
+  ctx += tasks.map(t=>`- ${t.done?'[✓]':'[ ]'} ${t.name}, исполнитель: ${t.app_users?.full_name||'не назначен'}, приоритет: ${t.priority}${t.due_date?', срок: '+t.due_date:''}`).join('\n') || 'нет задач';
+  ctx += `\n\nСМЕТА (${items.length} позиций, итого ${estimateTotal.toLocaleString('ru-RU')} ₽):\n`;
+  ctx += items.map(i=>`- ${i.name}: ${i.qty} ${i.unit||''} × ${i.price} ₽`).join('\n') || 'смета пуста';
+  ctx += `\n\nПОСЛЕДНИЕ ОТЧЁТЫ:\n`;
+  ctx += reports.map(r=>`- ${new Date(r.created_at).toLocaleDateString('ru-RU')}, ${r.app_users?.full_name||'сотрудник'}: ${r.comment||'(без комментария, есть фото)'}`).join('\n') || 'нет отчётов';
+
+  return ctx;
+}
+
+async function sendAiMessage(){
+  const input = document.getElementById('aiInput');
+  const text = input.value.trim();
+  if(!text) return;
+  input.value = '';
+
+  aiChatHistory.push({role:'user', content:text});
+  renderAiMessages();
+
+  const body = document.getElementById('aiChatBody');
+  body.insertAdjacentHTML('beforeend', `<div class="ai-typing" id="aiTyping"><span></span><span></span><span></span></div>`);
+  body.scrollTop = body.scrollHeight;
+
+  try{
+    const context = await buildProjectContext();
+    const systemPrompt = `Ты — заботливый ИИ-помощник прораба в строительной CRM. Отвечай кратко, по-человечески, на русском, без канцелярита. Используй данные об объекте ниже. Если чего-то не хватает в данных — так и скажи, не выдумывай цифры.\n\nДАННЫЕ ОБ ОБЪЕКТЕ:\n${context}`;
+
+    const apiMessages = aiChatHistory.map(m=>({role: m.role, content: m.content}));
+
+    const AI_PROXY_URL = "/api/ai-proxy";
+
+    const response = await fetch(AI_PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system: systemPrompt,
+        messages: apiMessages
+      })
+    });
+    const data = await response.json();
+    const answer = data.answer || data.error || 'Не получилось сформировать ответ, попробуйте ещё раз.';
+
+    document.getElementById('aiTyping')?.remove();
+    aiChatHistory.push({role:'assistant', content:answer});
+    renderAiMessages();
+  }catch(e){
+    document.getElementById('aiTyping')?.remove();
+    aiChatHistory.push({role:'assistant', content:'Не получилось получить ответ — проверьте интернет-соединение и попробуйте снова.'});
+    renderAiMessages();
+  }
+}
+
+/* ==================================================================
+   INIT
+================================================================== */
+window.addEventListener('error', function(e){
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed; bottom:0; left:0; right:0; background:#3a1414; color:#ffb3b3; padding:14px; font-size:12px; font-family:monospace; z-index:9999; max-height:40vh; overflow:auto; border-top:2px solid #ff5c5c;';
+  box.textContent = 'Ошибка: ' + e.message + ' (строка ' + e.lineno + ')';
+  document.body.appendChild(box);
+});
+
+applyTheme();
+
+tryAutoLogin().catch(function(err){
+  document.getElementById('loginScreen').style.display = 'flex';
+  const errEl = document.getElementById('loginError');
+  errEl.textContent = 'Ошибка запуска: ' + err.message;
+  errEl.style.display = 'block';
+});
+</script>
+</body>
+</html>
